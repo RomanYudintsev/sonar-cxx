@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import org.sonar.api.Plugin;
-import org.sonar.api.Plugin.Context;
 
 import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
@@ -44,6 +43,8 @@ import org.sonar.plugins.cxx.pclint.CxxPCLintRuleRepository;
 import org.sonar.plugins.cxx.pclint.CxxPCLintSensor;
 import org.sonar.plugins.cxx.rats.CxxRatsRuleRepository;
 import org.sonar.plugins.cxx.rats.CxxRatsSensor;
+import org.sonar.plugins.cxx.scanbuild.CxxScanbuildRuleRepository;
+import org.sonar.plugins.cxx.scanbuild.CxxScanbuildSensor;
 import org.sonar.plugins.cxx.squid.CxxSquidSensor;
 import org.sonar.plugins.cxx.valgrind.CxxValgrindRuleRepository;
 import org.sonar.plugins.cxx.valgrind.CxxValgrindSensor;
@@ -185,6 +186,24 @@ public final class CxxPlugin implements Plugin {
       .subCategory(subcateg)
       .index(2)
       .build(),
+            PropertyDefinition.builder(CxxScanbuildSensor.REPORT_PATH_KEY)
+                    .name("Scanbuild (Clang) report(s)")
+                    .description("bla bl bla"
+                            + " blo blo blo"
+                            + " boo boo boo"
+                    )
+                    .subCategory(subcateg)
+                    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+                    .index(1)
+                    .build(),
+            PropertyDefinition.builder(CxxScanbuildRuleRepository.CUSTOM_RULES_KEY)
+                    .name("Scanbuild custom rules")
+                    .description("XML definitions of custom Scanbuild rules, which are'nt builtin into the plugin."
+                            + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
+                    .type(PropertyType.TEXT)
+                    .subCategory(subcateg)
+                    .index(2)
+                    .build(),
       PropertyDefinition.builder(CxxValgrindSensor.REPORT_PATH_KEY)
       .name("Valgrind report(s)")
       .description("Path to <a href='http://valgrind.org/'>Valgrind</a> report(s), relative to projects root."
@@ -464,6 +483,8 @@ public final class CxxPlugin implements Plugin {
     l.add(CxxCoverageAggregator.class);
     l.add(CxxCppCheckRuleRepository.class);
     l.add(CxxCppCheckSensor.class);
+    l.add(CxxScanbuildRuleRepository.class);
+    l.add(CxxScanbuildSensor.class);
     l.add(CxxPCLintRuleRepository.class);
     l.add(CxxPCLintSensor.class);
     l.add(CxxDrMemoryRuleRepository.class);
