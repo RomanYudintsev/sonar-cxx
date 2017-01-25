@@ -19,16 +19,22 @@
  */
 package org.sonar.plugins.cxx.scanbuild;
 
-import org.codehaus.staxmate.in.SMHierarchicCursor;
-import org.codehaus.staxmate.in.SMInputCursor;
+import com.dd.plist.*;
+import org.sonar.api.batch.rule.ActiveRule;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.plugins.cxx.utils.EmptyReportException;
-import org.sonar.plugins.cxx.utils.StaxParser;
+import org.xml.sax.SAXException;
 
-import javax.xml.stream.XMLStreamException;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class ScanbuildParser {
     public static final Logger LOG = Loggers.get(ScanbuildParser.class);
@@ -43,84 +49,77 @@ public class ScanbuildParser {
      */
     public void processReport(final SensorContext context, File report)
             throws javax.xml.stream.XMLStreamException {
-        LOG.debug("Parsing 'Cppcheck V2' format");
-        StaxParser parser = new StaxParser(new StaxParser.XmlStreamHandler() {
-            /**
-             * {@inheritDoc}
-             */
-            @Override
-            public void stream(SMHierarchicCursor rootCursor) throws XMLStreamException {
-                boolean parsed = false;
+        LOG.debug("Parsing Clang plist format");
+        plistParse(context, report);
+    }
 
-                try {
-                    rootCursor.advance();
-                } catch (com.ctc.wstx.exc.WstxEOFException eofExc) {
-                    throw new EmptyReportException();
+    private void plistParse(final SensorContext context, final File file)
+    {
+        try {
+            // Clang report is NSDictionary, which converts to a Map
+            Map<String, Object> report = (Map<String, Object>) XMLPropertyListParser.parse(file).toJavaObject();
+
+            List<String> files = new ArrayList<String>();
+            for (Object obj : (Object[]) report.get("files")) {
+                files.add((String) obj);
+            }
+            List<Map<String, Object>> diagnostics = new ArrayList<Map<String, Object>>();
+            for (Object obj : (Object[]) report.get("diagnostics")) {
+                diagnostics.add((Map<String, Object>) obj);
+            }
+
+            for (Map<String, Object> diagnostic : diagnostics) {
+                Map<String, Object> location = (Map<String, Object>) diagnostic.get("location");
+
+                // diagnostic.keySet().forEach(key -> LOG.warn("diagnostic ::  {}",key + "->" + diagnostic.get(key)));
+
+                String issue_context = (String) diagnostic.get("issue_context");
+                if (!keyInRepository(issue_context, context))
+                {
+                    issue_context = "unknownError";
                 }
+                String msg = (String) diagnostic.get("description");
+                String line = location.get("line").toString();
+                String fileName = files.get((int) location.get("file")).replace("../../", "");
 
-                try {
-                    String version = rootCursor.getAttrValue("version");
-                    if ("2".equals(version)) {
-                        SMInputCursor errorsCursor = rootCursor.childElementCursor("errors");
-                        if (errorsCursor.getNext() != null) {
-                            parsed = true;
-                            SMInputCursor errorCursor = errorsCursor.childElementCursor("error");
-                            while (errorCursor.getNext() != null) {
-                                String id = errorCursor.getAttrValue("id");
-                                String msg = createMsg(
-                                        errorCursor.getAttrValue("inconclusive"),
-                                        errorCursor.getAttrValue("msg")
-                                );
-                                String file = null;
-                                String line = null;
+                LOG.warn("context.fileSystem().baseDir() - '{}'", context.fileSystem().baseDir());
 
-                                SMInputCursor locationCursor = errorCursor.childElementCursor("location");
-                                if (locationCursor.getNext() != null) {
-                                    file = locationCursor.getAttrValue("file");
-                                    line = locationCursor.getAttrValue("line");
 
-                                    if (file != null) {
-                                        file = file.replace('\\', '/');
-                                    }
-
-                                    if ("*".equals(file)) { // findings on project level
-                                        file = null;
-                                        line = null;
-                                    }
-                                }
-
-                                if (isInputValid(file, line, id, msg)) {
-                                    sensor.saveUniqueViolation(context, CxxScanbuildRuleRepository.KEY, file, line, id, msg);
-                                } else {
-                                    LOG.warn("Skipping invalid violation: '{}'", msg);
-                                }
-                            }
-                        }
-                    }
-                } catch (RuntimeException e) {
-                    throw new XMLStreamException();
-                }
-
-                if (!parsed) {
-                    throw new XMLStreamException();
+                LOG.warn("file + line + issue_context + msg - '{} {} {} {}'", fileName,line,issue_context,msg);
+                if (isInputValid(fileName, line, issue_context, msg)) {
+                    sensor.saveUniqueViolation(context, CxxScanbuildRuleRepository.KEY, fileName, line, issue_context, msg);
+                } else {
+                    LOG.warn("Skipping invalid violation: msg - '{}'", msg);
+                    LOG.warn("Skipping invalid violation: id - '{}'", issue_context);
                 }
             }
 
-            private String createMsg(String inconclusive, String msg) {
-                if (msg != null && !msg.isEmpty()) {
-                    if ("true".equals(inconclusive)) {
-                        return "[inconclusive] " + msg;
-                    }
-                }
-                return msg;
-            }
+        } catch (final IOException e) {
+            LOG.error("Error processing file named {}", file, e);
+        } catch (final ParserConfigurationException e) {
+            LOG.error("Error processing file named {}", file, e);
+        } catch (final ParseException e) {
+            LOG.error("Error processing file named {}", file, e);
+        } catch (final SAXException e) {
+            LOG.error("Error processing file named {}", file, e);
+        } catch (final PropertyListFormatException e) {
+            LOG.error("Error processing file named {}", file, e);
+        }
 
-            private boolean isInputValid(String file, String line, String id, String msg) {
-                return id != null && !id.isEmpty() && msg != null && !msg.isEmpty();
-            }
-        });
+    }
 
-        parser.parse(report);
+    private boolean keyInRepository(String key, final SensorContext context)
+    {
+        if (key == null || key.isEmpty())
+            return false;
+        LOG.warn("find key {} in rules repository {}", key, CxxScanbuildRuleRepository.KEY);
+        ActiveRule result = context.activeRules().findByInternalKey(CxxScanbuildRuleRepository.KEY, key);
+        LOG.warn("result :: {}", null != result);
+        return null != result;
+    }
+
+    private boolean isInputValid(String file, String line, String id, String msg) {
+        return id != null && !id.isEmpty() && msg != null && !msg.isEmpty();
     }
 
     @Override

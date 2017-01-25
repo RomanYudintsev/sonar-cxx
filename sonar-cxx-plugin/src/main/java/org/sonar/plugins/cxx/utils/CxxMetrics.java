@@ -40,7 +40,7 @@ public class CxxMetrics implements Metrics {
     .setQualitative(Boolean.TRUE)
     .setDomain("C++")
     .create();
-  public static final Metric SCANBUILD = new Metric.Builder("CXX-SCANBUILD", "scan-build(Clang) Errors", Metric.ValueType.INT)
+  public static final Metric SCANBUILD = new Metric.Builder("CXX-SCANBUILD", "Scan-build (Clang) Errors", Metric.ValueType.INT)
     .setDirection(Metric.DIRECTION_WORST)
     .setQualitative(Boolean.TRUE)
     .setDomain("C++")
@@ -98,6 +98,7 @@ public class CxxMetrics implements Metrics {
     list.add(DEPENDENCIES);
     list.add(COMPILER);
     list.add(CPPCHECK);
+    list.add(SCANBUILD);
     list.add(EXTERNAL);
     list.add(PCLINT);
     list.add(RATS);

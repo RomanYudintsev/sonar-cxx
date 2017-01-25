@@ -186,31 +186,30 @@ public final class CxxPlugin implements Plugin {
       .subCategory(subcateg)
       .index(2)
       .build(),
-            PropertyDefinition.builder(CxxScanbuildSensor.REPORT_PATH_KEY)
-                    .name("Scanbuild (Clang) report(s)")
-                    .description("bla bl bla"
-                            + " blo blo blo"
-                            + " boo boo boo"
-                    )
-                    .subCategory(subcateg)
-                    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-                    .index(1)
-                    .build(),
-            PropertyDefinition.builder(CxxScanbuildRuleRepository.CUSTOM_RULES_KEY)
-                    .name("Scanbuild custom rules")
-                    .description("XML definitions of custom Scanbuild rules, which are'nt builtin into the plugin."
-                            + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
-                    .type(PropertyType.TEXT)
-                    .subCategory(subcateg)
-                    .index(2)
-                    .build(),
+      PropertyDefinition.builder(CxxScanbuildSensor.REPORT_PATH_KEY)
+      .name("Scanbuild (Clang) report(s)")
+      .description("bla bl bla"
+        + " blo blo blo"
+        + " boo boo boo")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(3)
+      .build(),
+      PropertyDefinition.builder(CxxScanbuildRuleRepository.CUSTOM_RULES_KEY)
+      .name("Scanbuild custom rules")
+      .description("XML definitions of custom Scanbuild rules, which are'nt builtin into the plugin."
+        + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
+      .type(PropertyType.TEXT)
+      .subCategory(subcateg)
+      .index(4)
+      .build(),
       PropertyDefinition.builder(CxxValgrindSensor.REPORT_PATH_KEY)
       .name("Valgrind report(s)")
       .description("Path to <a href='http://valgrind.org/'>Valgrind</a> report(s), relative to projects root."
         + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(3)
+      .index(5)
       .build(),
       PropertyDefinition.builder(CxxValgrindRuleRepository.CUSTOM_RULES_KEY)
       .name("Valgrind custom rules")
@@ -218,7 +217,7 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(4)
+      .index(6)
       .build(),
       PropertyDefinition.builder(CxxDrMemorySensor.REPORT_PATH_KEY)
       .name("Dr Memory report(s)")
@@ -226,7 +225,7 @@ public final class CxxPlugin implements Plugin {
         + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(5)
+      .index(7)
       .build(),
       PropertyDefinition.builder(CxxPCLintSensor.REPORT_PATH_KEY)
       .name("PC-lint report(s)")
@@ -234,7 +233,7 @@ public final class CxxPlugin implements Plugin {
         + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(5)
+      .index(8)
       .build(),
       PropertyDefinition.builder(CxxPCLintRuleRepository.CUSTOM_RULES_KEY)
       .name("PC-lint custom rules")
@@ -242,7 +241,7 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(6)
+      .index(9)
       .build(),
       PropertyDefinition.builder(CxxRatsSensor.REPORT_PATH_KEY)
       .name("RATS report(s)")
@@ -250,7 +249,7 @@ public final class CxxPlugin implements Plugin {
         + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(7)
+      .index(10)
       .build(),
       PropertyDefinition.builder(CxxRatsRuleRepository.CUSTOM_RULES_KEY)
       .name("RATS custom rules")
@@ -258,7 +257,7 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(8)
+      .index(11)
       .build(),
       PropertyDefinition.builder(CxxVeraxxSensor.REPORT_PATH_KEY)
       .name("Vera++ report(s)")
@@ -266,7 +265,7 @@ public final class CxxPlugin implements Plugin {
         + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(9)
+      .index(12)
       .build(),
       PropertyDefinition.builder(CxxVeraxxRuleRepository.CUSTOM_RULES_KEY)
       .name("Vera++ custom rules")
@@ -274,7 +273,7 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(10)
+      .index(12)
       .build(),
       PropertyDefinition.builder(CxxExternalRulesSensor.REPORT_PATH_KEY)
       .name("External checkers report(s)")
@@ -283,7 +282,7 @@ public final class CxxPlugin implements Plugin {
         + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a> for details.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(11)
+      .index(13)
       .build(),
       PropertyDefinition.builder(CxxExternalRuleRepository.RULES_KEY)
       .name("External rules")
@@ -292,7 +291,7 @@ public final class CxxPlugin implements Plugin {
       .type(PropertyType.TEXT)
       .multiValues(true)
       .subCategory(subcateg)
-      .index(12)
+      .index(14)
       .build(),
       PropertyDefinition.builder(CxxClangTidySensor.REPORT_PATH_KEY)
       .name("Clang-Tidy analyzer report(s)")

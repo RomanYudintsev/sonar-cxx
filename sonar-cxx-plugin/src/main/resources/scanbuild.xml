@@ -1,10 +1,154 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <rules>
     <rule>
-        <key>other</key>
-        <configKey>other</configKey>
-        <name>Clang Static Analyzer warning - other</name>
-        <priority>MAJOR</priority>
+        <key>unknownError</key>
+        <configKey>unknownError</configKey>
+        <name>Clang Static Analyzer found some error, but not exists in global dictionary</name>
+        <priority>MINOR</priority>
         <description>Warning reported by Clang Static Analyzer (uncategorized).</description>
+    </rule>
+    <rule>
+        <key>TestBody</key>
+        <name>TestBody</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>TestBody</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>JsonBox</key>
+        <name>JsonBox</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>JsonBox</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>GetAttributeImpl</key>
+        <name>GetAttributeImpl</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>GetAttributeImpl</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>CloneImpl</key>
+        <name>CloneImpl</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>CloneImpl</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>UnpackImpl</key>
+        <name>UnpackImpl</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>UnpackImpl</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>AsJsonImpl</key>
+        <name>AsJsonImpl</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>AsJsonImpl</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>SetAttributeImpl</key>
+        <name>SetAttributeImpl</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>SetAttributeImpl</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>operator()</key>
+        <name>operator()</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>operator()</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
+    </rule>
+    <rule>
+        <key>SingleShotSignalTest_ConnectionDisconnect_Direct_Test</key>
+        <name>SingleShotSignalTest_ConnectionDisconnect_Direct_Test</name>
+        <description>
+            <![CDATA[<p>
+some description
+</p>
+]]>
+        </description>
+        <tag>clang</tag>
+        <internalKey>SingleShotSignalTest_ConnectionDisconnect_Direct_Test</internalKey>
+        <severity>MINOR</severity>
+        <type>CODE_SMELL</type>
+        <remediationFunction>LINEAR</remediationFunction>
+        <remediationFunctionGapMultiplier>5min</remediationFunctionGapMultiplier>
     </rule>
 </rules>
