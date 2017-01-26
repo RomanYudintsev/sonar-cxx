@@ -46,8 +46,6 @@ public class CxxScanbuildSensor extends CxxReportSensor {
 
     private final Metric metric;
 
-    private int violationsCount;
-
     /**
      * {@inheritDoc}
      */
@@ -72,7 +70,7 @@ public class CxxScanbuildSensor extends CxxReportSensor {
         try {
             LOG.info("Searching reports by relative path with basedir '{}' and search prop '{}'", context.fileSystem().baseDir(), reportPathKey());
             List<File> reports = getRecursiveReports(settings, context.fileSystem().baseDir(), reportPathKey());
-            violationsCount = 0;
+            int violationsCount = 0;
             LOG.info("'{}' reports found", reports.size());
             for (File report : reports) {
                 int prevViolationsCount = violationsCount;

@@ -56,7 +56,6 @@ public class ScanbuildParser {
     private void plistParse(final SensorContext context, final File file)
     {
         try {
-            // Clang report is NSDictionary, which converts to a Map
             Map<String, Object> report = (Map<String, Object>) XMLPropertyListParser.parse(file).toJavaObject();
 
             List<String> files = new ArrayList<String>();
@@ -73,11 +72,13 @@ public class ScanbuildParser {
 
                 // diagnostic.keySet().forEach(key -> LOG.warn("diagnostic ::  {}",key + "->" + diagnostic.get(key)));
 
-                String issue_context = (String) diagnostic.get("issue_context");
-                if (!keyInRepository(issue_context, context))
+                String id = ((String) diagnostic.get("type")).replaceAll(" ", "").toLowerCase();
+
+                if (!keyInRepository(id, context))
                 {
-                    issue_context = "unknownError";
+                    id = "unknownError";
                 }
+
                 String msg = (String) diagnostic.get("description");
                 String line = location.get("line").toString();
                 String fileName = files.get((int) location.get("file")).replace("../../", "");
@@ -85,12 +86,12 @@ public class ScanbuildParser {
                 LOG.warn("context.fileSystem().baseDir() - '{}'", context.fileSystem().baseDir());
 
 
-                LOG.warn("file + line + issue_context + msg - '{} {} {} {}'", fileName,line,issue_context,msg);
-                if (isInputValid(fileName, line, issue_context, msg)) {
-                    sensor.saveUniqueViolation(context, CxxScanbuildRuleRepository.KEY, fileName, line, issue_context, msg);
+                LOG.warn("file + line + id + msg - '{} {} {} {}'", fileName,line,id,msg);
+                if (isInputValid(fileName, line, id, msg)) {
+                    sensor.saveUniqueViolation(context, CxxScanbuildRuleRepository.KEY, fileName, line, id, msg);
                 } else {
                     LOG.warn("Skipping invalid violation: msg - '{}'", msg);
-                    LOG.warn("Skipping invalid violation: id - '{}'", issue_context);
+                    LOG.warn("Skipping invalid violation: id - '{}'", id);
                 }
             }
 
