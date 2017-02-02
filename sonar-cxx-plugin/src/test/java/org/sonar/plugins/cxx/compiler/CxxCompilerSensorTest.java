@@ -53,14 +53,14 @@ public class CxxCompilerSensorTest {
   public void shouldReportACorrectVcViolations() {
     Settings settings = new Settings();
     settings.setProperty("sonar.cxx.compiler.parser", CxxCompilerVcParser.KEY);
-    settings.setProperty(CxxCompilerSensor.REPORT_PATH_KEY, "compiler-reports/BuildLog.htm");
-    settings.setProperty(CxxCompilerSensor.REPORT_CHARSET_DEF, "UTF-16");
+    settings.setProperty(CxxCompilerGccSensor.REPORT_PATH_KEY, "compiler-reports/BuildLog.htm");
+    settings.setProperty(CxxCompilerGccSensor.REPORT_CHARSET_DEF, "UTF-16");
     
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
     context.fileSystem().add(new DefaultInputFile("myProjectKey", "zipmanager.cpp")
       .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n"));
 
-    CxxCompilerSensor sensor = new CxxCompilerSensor(settings);
+    CxxCompilerGccSensor sensor = new CxxCompilerGccSensor(settings);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(9);
   }
@@ -69,14 +69,14 @@ public class CxxCompilerSensorTest {
   public void shouldReportCorrectGccViolations() {
     Settings settings = new Settings();
     settings.setProperty("sonar.cxx.compiler.parser", CxxCompilerGccParser.KEY);
-    settings.setProperty(CxxCompilerSensor.REPORT_PATH_KEY, "compiler-reports/build.log");
-    settings.setProperty(CxxCompilerSensor.REPORT_CHARSET_DEF, "UTF-8");
+    settings.setProperty(CxxCompilerGccSensor.REPORT_PATH_KEY, "compiler-reports/build.log");
+    settings.setProperty(CxxCompilerGccSensor.REPORT_CHARSET_DEF, "UTF-8");
     
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
     context.fileSystem().add(new DefaultInputFile("myProjectKey", "zipmanager.cpp")
       .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n"));
     
-    CxxCompilerSensor sensor = new CxxCompilerSensor(settings);
+    CxxCompilerGccSensor sensor = new CxxCompilerGccSensor(settings);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(4);
   }
@@ -85,15 +85,15 @@ public class CxxCompilerSensorTest {
   public void shouldReportBCorrectVcViolations() {
     Settings settings = new Settings();
     settings.setProperty("sonar.cxx.compiler.parser", CxxCompilerVcParser.KEY);
-    settings.setProperty(CxxCompilerSensor.REPORT_PATH_KEY, "compiler-reports/VC-report.log");
-    settings.setProperty(CxxCompilerSensor.REPORT_CHARSET_DEF, "UTF-8");
-    settings.setProperty(CxxCompilerSensor.REPORT_REGEX_DEF, "^.*>(?<filename>.*)\\((?<line>\\d+)\\):\\x20warning\\x20(?<id>C\\d+):(?<message>.*)$");
+    settings.setProperty(CxxCompilerGccSensor.REPORT_PATH_KEY, "compiler-reports/VC-report.log");
+    settings.setProperty(CxxCompilerGccSensor.REPORT_CHARSET_DEF, "UTF-8");
+    settings.setProperty(CxxCompilerGccSensor.REPORT_REGEX_DEF, "^.*>(?<filename>.*)\\((?<line>\\d+)\\):\\x20warning\\x20(?<id>C\\d+):(?<message>.*)$");
     
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
     context.fileSystem().add(new DefaultInputFile("myProjectKey", "zipmanager.cpp")
       .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n"));
     
-    CxxCompilerSensor sensor = new CxxCompilerSensor(settings);
+    CxxCompilerGccSensor sensor = new CxxCompilerGccSensor(settings);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(9);
   }

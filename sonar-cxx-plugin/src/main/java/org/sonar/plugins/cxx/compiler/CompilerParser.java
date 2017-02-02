@@ -27,7 +27,7 @@ import org.sonar.api.batch.sensor.SensorContext;
 
 /**
  * The interface a compiler parser has to implement in order to be used by
- * CxxCompilerSensor
+ * CxxCompilerGccSensor
  *
  * @author Ferrand
  */

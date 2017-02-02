@@ -43,7 +43,10 @@ import org.sonar.api.utils.log.Loggers;
  * common logic such as finding the reports and saving issues in SonarQube
  */
 public abstract class CxxReportSensor implements Sensor {
+  public static final String PARSER_KEY_DEF = "sonar.cxx.compiler.parser";
+  public static final String DEFAULT_CHARSET_DEF = "UTF-8";
   public static final Logger LOG = Loggers.get(CxxReportSensor.class);
+
   private final Set<String> notFoundFiles = new HashSet<>();
   private final Set<String> uniqueIssues = new HashSet<>();
   private final Metric metric;

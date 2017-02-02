@@ -44,9 +44,9 @@ import org.sonar.cxx.api.CxxMetric;
 import org.sonar.plugins.cxx.api.CustomCxxRulesDefinition;
 import org.sonar.cxx.checks.CheckList;
 import org.sonar.plugins.cxx.CxxLanguage;
+import org.sonar.plugins.cxx.compiler.CxxCompilerGccSensor;
 import org.sonar.plugins.cxx.utils.CxxMetrics;
 import org.sonar.plugins.cxx.CxxPlugin;
-import org.sonar.plugins.cxx.compiler.CxxCompilerSensor;
 import org.sonar.plugins.cxx.utils.CxxReportSensor;
 import org.sonar.squidbridge.AstScanner;
 import org.sonar.squidbridge.SquidAstVisitor;
@@ -185,12 +185,12 @@ public final class CxxSquidSensor implements Sensor {
       }
     }
 
-    String filePaths = settings.getString(CxxCompilerSensor.REPORT_PATH_KEY);
+    String filePaths = settings.getString(CxxCompilerGccSensor.REPORT_PATH_KEY);
     if (filePaths != null && !"".equals(filePaths)) {
-      List<File> reports = CxxReportSensor.getReports(settings, fs.baseDir(), CxxCompilerSensor.REPORT_PATH_KEY);
+      List<File> reports = CxxReportSensor.getReports(settings, fs.baseDir(), CxxCompilerGccSensor.REPORT_PATH_KEY);
       cxxConf.setCompilationPropertiesWithBuildLog(reports,
-        settings.getString(CxxCompilerSensor.PARSER_KEY_DEF),
-        settings.getString(CxxCompilerSensor.REPORT_CHARSET_DEF));
+        settings.getString(CxxCompilerGccSensor.PARSER_KEY_DEF),
+        settings.getString(CxxCompilerGccSensor.REPORT_CHARSET_DEF));
     }
 
     return cxxConf;

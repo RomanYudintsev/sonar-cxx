@@ -30,7 +30,12 @@ import org.sonar.api.measures.Metrics;
  */
 public class CxxMetrics implements Metrics {
 
-  public static final Metric COMPILER = new Metric.Builder("CXX-COMPILER", "C++ compiler Warnings", Metric.ValueType.INT)
+  public static final Metric GCC_COMPILER = new Metric.Builder("CXX-GCC-COMPILER", "GCC compiler Warnings", Metric.ValueType.INT)
+    .setDirection(Metric.DIRECTION_WORST)
+    .setQualitative(Boolean.TRUE)
+    .setDomain("C++")
+    .create();
+  public static final Metric VC_COMPILER = new Metric.Builder("CXX-VC-COMPILER", "VC+ compiler Warnings", Metric.ValueType.INT)
     .setDirection(Metric.DIRECTION_WORST)
     .setQualitative(Boolean.TRUE)
     .setDomain("C++")
@@ -96,7 +101,8 @@ public class CxxMetrics implements Metrics {
   public List<Metric> getMetrics() {
     List<Metric> list = new ArrayList<>();
     list.add(DEPENDENCIES);
-    list.add(COMPILER);
+    list.add(GCC_COMPILER);
+    list.add(VC_COMPILER);
     list.add(CPPCHECK);
     list.add(SCANBUILD);
     list.add(EXTERNAL);

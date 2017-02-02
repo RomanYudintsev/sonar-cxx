@@ -29,11 +29,7 @@ import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.plugins.cxx.clangtidy.CxxClangTidyRuleRepository;
 import org.sonar.plugins.cxx.clangtidy.CxxClangTidySensor;
-import org.sonar.plugins.cxx.compiler.CxxCompilerGccParser;
-import org.sonar.plugins.cxx.compiler.CxxCompilerGccRuleRepository;
-import org.sonar.plugins.cxx.compiler.CxxCompilerSensor;
-import org.sonar.plugins.cxx.compiler.CxxCompilerVcParser;
-import org.sonar.plugins.cxx.compiler.CxxCompilerVcRuleRepository;
+import org.sonar.plugins.cxx.compiler.*;
 import org.sonar.plugins.cxx.coverage.CxxCoverageSensor;
 import org.sonar.plugins.cxx.cppcheck.CxxCppCheckRuleRepository;
 import org.sonar.plugins.cxx.cppcheck.CxxCppCheckSensor;
@@ -315,7 +311,7 @@ public final class CxxPlugin implements Plugin {
   private static List<PropertyDefinition> compilerWarningsProperties() {
     String subcateg = "(4) Compiler warnings";
     return new ArrayList<>(Arrays.asList(
-      PropertyDefinition.builder(CxxCompilerSensor.REPORT_PATH_KEY)
+      PropertyDefinition.builder(CxxCompilerGccSensor.REPORT_PATH_KEY)
       .name("Compiler report(s)")
       .description("Path to compilers output (i.e. file(s) containg compiler warnings), relative to projects root."
         + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
@@ -323,31 +319,56 @@ public final class CxxPlugin implements Plugin {
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
       .index(1)
       .build(),
-      PropertyDefinition.builder(CxxCompilerSensor.PARSER_KEY_DEF)
-      .defaultValue(CxxCompilerSensor.DEFAULT_PARSER_DEF)
-      .name("Format")
-      .type(PropertyType.SINGLE_SELECT_LIST)
-      .options(CxxCompilerVcParser.KEY, CxxCompilerGccParser.KEY)
-      .description("The format of the warnings file. Currently supported are Visual C++ and GCC.")
+      PropertyDefinition.builder(CxxCompilerVcSensor.REPORT_PATH_KEY)
+      .name("VC+ Compiler report(s)")
+      .description("Path to compilers output (i.e. file(s) containg compiler warnings), relative to projects root."
+        + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
       .index(2)
       .build(),
-      PropertyDefinition.builder(CxxCompilerSensor.REPORT_CHARSET_DEF)
+      PropertyDefinition.builder(CxxCompilerSensor.PARSER_KEY_DEF)
+      .defaultValue(CxxCompilerGccParser.KEY)
+      .name("Format")
+      .type(PropertyType.SINGLE_SELECT_LIST)
+      .options(CxxCompilerVcParser.KEY, CxxCompilerGccParser.KEY)
+      .multiValues(true)
+      .description("The format of the warnings file. Currently supported are Visual C++ and GCC.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(3)
+      .build(),
+      PropertyDefinition.builder(CxxCompilerGccSensor.REPORT_CHARSET_DEF)
       .defaultValue(CxxCompilerSensor.DEFAULT_CHARSET_DEF)
       .name("Encoding")
       .description("The encoding to use when reading the compiler report. Leave empty to use parser's default.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(3)
+      .index(4)
       .build(),
-      PropertyDefinition.builder(CxxCompilerSensor.REPORT_REGEX_DEF)
+      PropertyDefinition.builder(CxxCompilerVcSensor.REPORT_CHARSET_DEF)
+      .defaultValue(CxxCompilerSensor.DEFAULT_CHARSET_DEF)
+      .name("Encoding")
+      .description("The encoding to use when reading the compiler report. Leave empty to use parser's default.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(5)
+      .build(),
+      PropertyDefinition.builder(CxxCompilerGccSensor.REPORT_REGEX_DEF)
       .name("Custom matcher")
       .description("Regular expression to identify the four groups of the compiler warning message: file, line, ID, message. For advanced usages. Leave empty to use parser's default."
         + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>this page</a> for details regarding the different regular expression that can be use per compiler.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(4)
+      .index(6)
+      .build(),
+      PropertyDefinition.builder(CxxCompilerVcSensor.REPORT_REGEX_DEF)
+      .name("Custom matcher")
+      .description("Regular expression to identify the four groups of the compiler warning message: file, line, ID, message. For advanced usages. Leave empty to use parser's default."
+        + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>this page</a> for details regarding the different regular expression that can be use per compiler.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(7)
       .build(),
       PropertyDefinition.builder(CxxCompilerVcRuleRepository.CUSTOM_RULES_KEY)
       .name("Custom rules for Visual C++ warnings")
@@ -355,7 +376,7 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(5)
+      .index(8)
       .build(),
       PropertyDefinition.builder(CxxCompilerGccRuleRepository.CUSTOM_RULES_KEY)
       .name("Custom rules for GCC warnings")
@@ -363,7 +384,7 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(6)
+      .index(9)
       .build()
     ));
   }
@@ -490,7 +511,8 @@ public final class CxxPlugin implements Plugin {
     l.add(CxxDrMemorySensor.class);
     l.add(CxxCompilerVcRuleRepository.class);
     l.add(CxxCompilerGccRuleRepository.class);
-    l.add(CxxCompilerSensor.class);
+    l.add(CxxCompilerGccSensor.class);
+    l.add(CxxCompilerVcSensor.class);
     l.add(CxxVeraxxRuleRepository.class);
     l.add(CxxVeraxxSensor.class);
     l.add(CxxValgrindRuleRepository.class);
