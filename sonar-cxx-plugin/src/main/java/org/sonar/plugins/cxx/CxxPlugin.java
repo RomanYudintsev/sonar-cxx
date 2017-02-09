@@ -327,16 +327,24 @@ public final class CxxPlugin implements Plugin {
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
       .index(2)
       .build(),
+      PropertyDefinition.builder(CxxCompilerClangSensor.REPORT_PATH_KEY)
+      .name("Clang Compiler report(s)")
+      .description("Path to compilers output (i.e. file(s) containg compiler warnings), relative to projects root."
+        + " Use <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> if neccessary.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(3)
+      .build(),
       PropertyDefinition.builder(CxxCompilerSensor.PARSER_KEY_DEF)
       .defaultValue(CxxCompilerGccParser.KEY)
       .name("Format")
       .type(PropertyType.SINGLE_SELECT_LIST)
-      .options(CxxCompilerVcParser.KEY, CxxCompilerGccParser.KEY)
+      .options(CxxCompilerVcParser.KEY, CxxCompilerGccParser.KEY, CxxCompilerClangParser.KEY)
       .multiValues(true)
-      .description("The format of the warnings file. Currently supported are Visual C++ and GCC.")
+      .description("The format of the warnings file. Currently supported are Visual C++ and GCC and Clang.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(3)
+      .index(4)
       .build(),
       PropertyDefinition.builder(CxxCompilerGccSensor.REPORT_CHARSET_DEF)
       .defaultValue(CxxCompilerSensor.DEFAULT_CHARSET_DEF)
@@ -344,7 +352,15 @@ public final class CxxPlugin implements Plugin {
       .description("The encoding to use when reading the compiler report. Leave empty to use parser's default.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(4)
+      .index(5)
+      .build(),
+      PropertyDefinition.builder(CxxCompilerClangSensor.REPORT_CHARSET_DEF)
+      .defaultValue(CxxCompilerSensor.DEFAULT_CHARSET_DEF)
+      .name("Encoding")
+      .description("The encoding to use when reading the compiler report. Leave empty to use parser's default.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(6)
       .build(),
       PropertyDefinition.builder(CxxCompilerVcSensor.REPORT_CHARSET_DEF)
       .defaultValue(CxxCompilerSensor.DEFAULT_CHARSET_DEF)
@@ -352,7 +368,7 @@ public final class CxxPlugin implements Plugin {
       .description("The encoding to use when reading the compiler report. Leave empty to use parser's default.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(5)
+      .index(7)
       .build(),
       PropertyDefinition.builder(CxxCompilerGccSensor.REPORT_REGEX_DEF)
       .name("Custom matcher")
@@ -360,7 +376,7 @@ public final class CxxPlugin implements Plugin {
         + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>this page</a> for details regarding the different regular expression that can be use per compiler.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(6)
+      .index(8)
       .build(),
       PropertyDefinition.builder(CxxCompilerVcSensor.REPORT_REGEX_DEF)
       .name("Custom matcher")
@@ -368,7 +384,15 @@ public final class CxxPlugin implements Plugin {
         + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>this page</a> for details regarding the different regular expression that can be use per compiler.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(7)
+      .index(9)
+      .build(),
+      PropertyDefinition.builder(CxxCompilerClangSensor.REPORT_REGEX_DEF)
+      .name("Custom matcher")
+      .description("Regular expression to identify the four groups of the compiler warning message: file, line, ID, message. For advanced usages. Leave empty to use parser's default."
+        + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>this page</a> for details regarding the different regular expression that can be use per compiler.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(10)
       .build(),
       PropertyDefinition.builder(CxxCompilerVcRuleRepository.CUSTOM_RULES_KEY)
       .name("Custom rules for Visual C++ warnings")
@@ -376,7 +400,7 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(8)
+      .index(11)
       .build(),
       PropertyDefinition.builder(CxxCompilerGccRuleRepository.CUSTOM_RULES_KEY)
       .name("Custom rules for GCC warnings")
@@ -384,7 +408,15 @@ public final class CxxPlugin implements Plugin {
         + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(9)
+      .index(12)
+      .build(),
+      PropertyDefinition.builder(CxxCompilerClangRuleRepository.CUSTOM_RULES_KEY)
+      .name("Custom rules for Clang warnings")
+      .description("XML definitions of custom rules for Clang's warnings, which are'nt builtin into the plugin."
+        + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
+      .type(PropertyType.TEXT)
+      .subCategory(subcateg)
+      .index(13)
       .build()
     ));
   }
@@ -511,8 +543,10 @@ public final class CxxPlugin implements Plugin {
     l.add(CxxDrMemorySensor.class);
     l.add(CxxCompilerVcRuleRepository.class);
     l.add(CxxCompilerGccRuleRepository.class);
+    l.add(CxxCompilerClangRuleRepository.class);
     l.add(CxxCompilerGccSensor.class);
     l.add(CxxCompilerVcSensor.class);
+    l.add(CxxCompilerClangSensor.class);
     l.add(CxxVeraxxRuleRepository.class);
     l.add(CxxVeraxxSensor.class);
     l.add(CxxValgrindRuleRepository.class);

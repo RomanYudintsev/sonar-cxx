@@ -52,7 +52,7 @@ public class XunitReportParser implements XmlStreamHandler {
    */
   @Override
   public void stream(SMHierarchicCursor rootCursor) throws XMLStreamException {
-    SMInputCursor testSuiteCursor = rootCursor.constructDescendantCursor(new ElementFilter("testsuite"));
+    SMInputCursor testSuiteCursor = rootCursor.constructDescendantCursor(new ElementFilter("testsuites"));
     try {
       testSuiteCursor.getNext();
     } catch (com.ctc.wstx.exc.WstxEOFException eofExc) {

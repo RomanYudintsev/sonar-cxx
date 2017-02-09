@@ -40,6 +40,11 @@ public class CxxMetrics implements Metrics {
     .setQualitative(Boolean.TRUE)
     .setDomain("C++")
     .create();
+  public static final Metric CLANG_COMPILER = new Metric.Builder("CXX-CLANG-COMPILER", "Clang compiler Warnings", Metric.ValueType.INT)
+    .setDirection(Metric.DIRECTION_WORST)
+    .setQualitative(Boolean.TRUE)
+    .setDomain("C++")
+    .create();
   public static final Metric CPPCHECK = new Metric.Builder("CXX-CPPCHECK", "CppCheck Errors", Metric.ValueType.INT)
     .setDirection(Metric.DIRECTION_WORST)
     .setQualitative(Boolean.TRUE)
@@ -103,6 +108,7 @@ public class CxxMetrics implements Metrics {
     list.add(DEPENDENCIES);
     list.add(GCC_COMPILER);
     list.add(VC_COMPILER);
+    list.add(CLANG_COMPILER);
     list.add(CPPCHECK);
     list.add(SCANBUILD);
     list.add(EXTERNAL);
