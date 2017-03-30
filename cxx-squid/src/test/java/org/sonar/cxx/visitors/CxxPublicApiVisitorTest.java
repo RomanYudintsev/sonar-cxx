@@ -1,6 +1,6 @@
 /*
  * Sonar C++ Plugin (Community)
- * Copyright (C) 2010-2016 SonarOpenCommunity
+ * Copyright (C) 2010-2017 SonarOpenCommunity
  * http://github.com/SonarOpenCommunity/sonar-cxx
  *
  * This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.cxx;
+package org.sonar.cxx.visitors;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -25,21 +25,24 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import org.fest.assertions.Fail;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.sonar.cxx.api.CxxMetric;
-import org.sonar.cxx.visitors.CxxPublicApiVisitor;
 import org.sonar.cxx.visitors.CxxPublicApiVisitor.PublicApiHandler;
 import org.sonar.squidbridge.api.SourceFile;
+import org.sonar.cxx.CxxFileTester;
+import org.sonar.cxx.CxxFileTesterHelper;
+import org.sonar.cxx.CxxAstScanner;
 
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Grammar;
 import com.sonar.sslr.api.Token;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 public class CxxPublicApiVisitorTest {
 
@@ -134,7 +137,7 @@ public class CxxPublicApiVisitorTest {
 
   @Test
   public void template() throws IOException {
-    testFile("src/test/resources/metrics/template.h", 13, 4, false);
+    testFile("src/test/resources/metrics/template.h", 14, 4, false);
   }
 
   @Test

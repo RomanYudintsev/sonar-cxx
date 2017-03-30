@@ -1,6 +1,6 @@
 /*
  * Sonar C++ Plugin (Community)
- * Copyright (C) 2010-2016 SonarOpenCommunity
+ * Copyright (C) 2010-2017 SonarOpenCommunity
  * http://github.com/SonarOpenCommunity/sonar-cxx
  *
  * This program is free software; you can redistribute it and/or
@@ -280,4 +280,22 @@ public class CxxConfigurationTest {
 
   }
 
+  @Test
+  public void shouldGetSourceFilesList() {
+    CxxConfiguration config = new CxxConfiguration();
+
+    String [] files = new String [] { "testfile", "anotherfile", "thirdfile" };
+
+    for (String filename : files) {
+      config.addCompilationUnitSettings(filename, new CxxCompilationUnitSettings());
+    }
+
+    List <File> sourceFiles = config.getCompilationUnitSourceFiles();
+
+    assertThat(sourceFiles.size()).isEqualTo(files.length);
+
+    for (File file : sourceFiles) {
+      Assertions.assertThat(files).as(file.getName());
+    }
+  }
 }

@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.sonarsource.sonarqube-plugins.cxx</groupId>
     <artifactId>cxx</artifactId>
-    <version>0.9.7-SNAPSHOT</version>
+    <version>0.9.8-SNAPSHOT</version>
   </parent>
 
   <artifactId>sonar-cxx-plugin</artifactId>
@@ -80,11 +80,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>cxx-lint</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
        <groupId>com.google.guava</groupId>
        <artifactId>guava</artifactId>
        <version>10.0.1</version>
@@ -99,6 +94,16 @@
       <artifactId>commons-lang</artifactId>
       <version>2.6</version>
       <type>jar</type>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.8.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.8.6</version>
     </dependency>
   </dependencies>
 

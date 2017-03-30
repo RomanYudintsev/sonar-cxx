@@ -1,6 +1,6 @@
 /*
  * Sonar C++ Plugin (Community)
- * Copyright (C) 2010-2016 SonarOpenCommunity
+ * Copyright (C) 2010-2017 SonarOpenCommunity
  * http://github.com/SonarOpenCommunity/sonar-cxx
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,6 @@ public class CxxPluginTest {
    Plugin.Context context = new Plugin.Context(SonarQubeVersion.V5_6);
    CxxPlugin plugin = new CxxPlugin();
    plugin.define(context);
-   assertThat(context.getExtensions()).hasSize(65);
+   assertThat(context.getExtensions()).hasSize(71);
   }
 }

@@ -1,6 +1,6 @@
 /*
  * Sonar C++ Plugin (Community)
- * Copyright (C) 2010-2016 SonarOpenCommunity
+ * Copyright (C) 2010-2017 SonarOpenCommunity
  * http://github.com/SonarOpenCommunity/sonar-cxx
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@ import org.sonar.api.Plugin.Context;
 import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
+import org.sonar.plugins.cxx.clangtidy.CxxClangTidyRuleRepository;
+import org.sonar.plugins.cxx.clangtidy.CxxClangTidySensor;
 import org.sonar.plugins.cxx.compiler.CxxCompilerGccParser;
 import org.sonar.plugins.cxx.compiler.CxxCompilerGccRuleRepository;
 import org.sonar.plugins.cxx.compiler.CxxCompilerSensor;
@@ -69,6 +71,8 @@ public final class CxxPlugin implements Plugin {
   public static final String FORCE_INCLUDE_FILES_KEY = "sonar.cxx.forceIncludes";
   public static final String C_FILES_PATTERNS_KEY = "sonar.cxx.cFilesPatterns";
   public static final String MISSING_INCLUDE_WARN = "sonar.cxx.missingIncludeWarnings";
+  public static final String JSON_COMPILATION_DATABASE_KEY = "sonar.cxx.jsonCompilationDatabase";
+  public static final String SCAN_ONLY_SPECIFIED_SOURCES_KEY = "sonar.cxx.scanOnlySpecifiedSources";
   public static final String CPD_IGNORE_LITERALS_KEY = "sonar.cxx.cpd.ignoreLiterals";
   public static final String CPD_IGNORE_IDENTIFIERS_KEY = "sonar.cxx.cpd.ignoreIdentifiers";
       
@@ -140,6 +144,22 @@ public final class CxxPlugin implements Plugin {
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
       .type(PropertyType.BOOLEAN)
       .index(8)
+      .build(),
+      PropertyDefinition.builder(CxxPlugin.JSON_COMPILATION_DATABASE_KEY)
+      .subCategory(subcateg)
+      .name("JSON Compilation Database")
+      .description("JSON Compilation Database file to use as specification for what defines and includes should be used for source files.")
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(9)
+      .build(),
+      PropertyDefinition.builder(CxxPlugin.SCAN_ONLY_SPECIFIED_SOURCES_KEY)
+      .defaultValue("False")
+      .name("Scan only specified source files")
+      .description("Only scan source files defined in specification file. Eg. by JSON Compilation Database.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .type(PropertyType.BOOLEAN)
+      .index(10)
       .build()
     ));
   }
@@ -254,6 +274,22 @@ public final class CxxPlugin implements Plugin {
       .multiValues(true)
       .subCategory(subcateg)
       .index(12)
+      .build(),
+      PropertyDefinition.builder(CxxClangTidySensor.REPORT_PATH_KEY)
+      .name("Clang-Tidy analyzer report(s)")
+      .description("Path to Clang-Tidy reports, relative to projects root."
+        + " If neccessary, <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> are at your service.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(13)
+      .build(),
+      PropertyDefinition.builder(CxxClangTidyRuleRepository.CUSTOM_RULES_KEY)
+      .name("Clang-Tidy custom rules")
+      .description("XML definitions of custom Clang-Tidy rules, which aren't builtin into the plugin."
+        + " The used format is described <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a>.")
+      .type(PropertyType.TEXT)
+      .subCategory(subcateg)
+      .index(14)
       .build()
     ));
   }
@@ -445,6 +481,8 @@ public final class CxxPlugin implements Plugin {
     l.add(CxxRuleRepository.class);
     l.add(CxxUnitTestResultsAggregator.class);
     l.add(CxxUnitTestResultsImportSensor.class);
+    l.add(CxxClangTidyRuleRepository.class);
+    l.add(CxxClangTidySensor.class);
 
     l.addAll(generalProperties());
     l.addAll(codeAnalysisProperties());

@@ -1,6 +1,6 @@
 /*
  * Sonar C++ Plugin (Community)
- * Copyright (C) 2010-2016 SonarOpenCommunity
+ * Copyright (C) 2010-2017 SonarOpenCommunity
  * http://github.com/SonarOpenCommunity/sonar-cxx
  *
  * This program is free software; you can redistribute it and/or
@@ -1343,7 +1343,7 @@ public enum CxxGrammarImpl implements GrammarRuleKey {
           b.optional(emptyStatement)),
         b.sequence(
           b.optional(attributeSpecifierSeq),
-          b.optional(vcAtlAttribute),
+          b.optional(b.firstOf(cliAttributes, vcAtlAttribute)),
           b.optional(b.firstOf("initonly", "literal")),
           b.optional(memberDeclSpecifierSeq),
           b.optional(memberDeclaratorList),
@@ -1784,7 +1784,7 @@ public enum CxxGrammarImpl implements GrammarRuleKey {
         ));
 
     b.rule(cliAttributeList).is(cliAttribute, b.zeroOrMore(",", cliAttribute));
-    b.rule(cliAttribute).is(typeName, b.optional(cliAttributeArguments));
+    b.rule(cliAttribute).is(b.optional(nestedNameSpecifier), typeName, b.optional(cliAttributeArguments));
     b.rule(cliAttributeArguments).is("(", 
         b.firstOf(
             b.optional(cliPositionArgumentList),

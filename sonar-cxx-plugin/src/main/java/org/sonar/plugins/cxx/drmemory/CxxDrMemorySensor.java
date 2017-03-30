@@ -1,6 +1,6 @@
 /*
  * Sonar C++ Plugin (Community)
- * Copyright (C) 2010-2016 SonarOpenCommunity
+ * Copyright (C) 2010-2017 SonarOpenCommunity
  * http://github.com/SonarOpenCommunity/sonar-cxx
  *
  * This program is free software; you can redistribute it and/or
@@ -92,7 +92,8 @@ public class CxxDrMemorySensor extends CxxReportSensor {
         .append(e)
         .append("'")
         .toString();
-      throw new IllegalStateException(msg, e);
+      LOG.error(msg);
+      CxxUtils.validateRecovery(e, settings);
     }
   }
 
