@@ -29,6 +29,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.api.batch.fs.FileSystem;
@@ -55,23 +57,26 @@ public class CxxConfiguration extends SquidConfiguration {
   private HashMap<String, CxxCompilationUnitSettings> compilationUnitSettings = new HashMap<>();
 
   private final CxxVCppBuildLogParser cxxVCppParser;
+  private CxxLanguage language;
 
-  public CxxConfiguration() {
-    
+  public CxxConfiguration(CxxLanguage language) {
+    this.language = language;
     uniqueIncludes.put(OVERALLINCLUDEKEY, new ArrayList<String>());
     uniqueDefines.put(OVERALLDEFINEKEY, new HashSet<String>());
     cxxVCppParser = new CxxVCppBuildLogParser(uniqueIncludes, uniqueDefines);
   }
 
-  public CxxConfiguration(Charset encoding) {
+  public CxxConfiguration(Charset encoding, CxxLanguage language) {
     super(encoding);
+    this.language = language;
     uniqueIncludes.put(OVERALLINCLUDEKEY, new ArrayList<String>());
     uniqueDefines.put(OVERALLDEFINEKEY, new HashSet<String>());
     cxxVCppParser = new CxxVCppBuildLogParser(uniqueIncludes, uniqueDefines);
   }
 
-  public CxxConfiguration(FileSystem fs) {
+  public CxxConfiguration(FileSystem fs, CxxLanguage language) {
     super(fs.encoding());
+    this.language = language;
     uniqueIncludes.put(OVERALLINCLUDEKEY, new ArrayList<String>());
     uniqueDefines.put(OVERALLDEFINEKEY, new HashSet<String>());
     cxxVCppParser = new CxxVCppBuildLogParser(uniqueIncludes, uniqueDefines);
@@ -85,7 +90,11 @@ public class CxxConfiguration extends SquidConfiguration {
     return ignoreHeaderComments;
   }
 
-  public void setDefines(List<String> defines) {
+  public void setDefines(@Nullable String[] defines) {
+    if (defines == null) {
+      return;
+    }
+    
     Set<String> overallDefs = uniqueDefines.get(OVERALLDEFINEKEY);
     for (String define : defines) {
       if (!overallDefs.contains(define)) {
@@ -100,12 +109,6 @@ public class CxxConfiguration extends SquidConfiguration {
       overallDefs.add(define);
     }
   }  
-
-  public void setDefines(String[] defines) {
-    if (defines != null) {
-      setDefines(Arrays.asList(defines));
-    }
-  }
 
   public List<String> getDefines() {
     Set<String> allDefines = new HashSet<>();
@@ -139,7 +142,7 @@ public class CxxConfiguration extends SquidConfiguration {
     }
   }  
 
-  public void setIncludeDirectories(String[] includeDirectories) {
+  public void setIncludeDirectories(@Nullable String[] includeDirectories) {
     if (includeDirectories != null) {
       setIncludeDirectories(Arrays.asList(includeDirectories));
     }
@@ -163,7 +166,7 @@ public class CxxConfiguration extends SquidConfiguration {
     this.forceIncludeFiles = forceIncludeFiles;
   }
 
-  public void setForceIncludeFiles(String[] forceIncludeFiles) {
+  public void setForceIncludeFiles(@Nullable String[] forceIncludeFiles) {
     if (forceIncludeFiles != null) {
       setForceIncludeFiles(Arrays.asList(forceIncludeFiles));
     }
@@ -193,7 +196,7 @@ public class CxxConfiguration extends SquidConfiguration {
     return cFilesPatterns;
   }
 
-  public void setCFilesPatterns(String[] cFilesPatterns) {
+  public void setCFilesPatterns(@Nullable String[] cFilesPatterns) {
     if (cFilesPatterns != null) {
       this.cFilesPatterns = Arrays.asList(cFilesPatterns);
     }
@@ -203,7 +206,7 @@ public class CxxConfiguration extends SquidConfiguration {
     this.headerFileSuffixes = headerFileSuffixes;
   }
 
-  public void setHeaderFileSuffixes(String[] headerFileSuffixes) {
+  public void setHeaderFileSuffixes(@Nullable String[] headerFileSuffixes) {
     if (headerFileSuffixes != null) {
       setHeaderFileSuffixes(Arrays.asList(headerFileSuffixes));
     }
@@ -254,7 +257,7 @@ public class CxxConfiguration extends SquidConfiguration {
   }
 
   public List<File> getCompilationUnitSourceFiles() {
-    List<File> files = new ArrayList<File>();
+    List<File> files = new ArrayList<>();
 
     for (Iterator<String> iter = compilationUnitSettings.keySet().iterator(); iter.hasNext(); ) {
       String item = iter.next();
@@ -279,17 +282,32 @@ public class CxxConfiguration extends SquidConfiguration {
         }
         if ("Visual C++".equals(fileFormat)) {
           cxxVCppParser.parseVCppLog(buildLog, baseDir, charsetName);
-          LOG.info("Parse build log '"+ buildLog.getAbsolutePath() +"' added includes: '"+ uniqueIncludes.size() +"', added defines: '" + uniqueDefines.size() + "'");
+          LOG.info("Parse build log '"+ buildLog.getAbsolutePath()
+                  +"' added includes: '" + uniqueIncludes.size()
+                  +"', added defines: '" + uniqueDefines.size() + "'");
         }
-
-        LOG.debug("Parse build log OK: includes: '{}' defines: '{}'", uniqueIncludes.size(), uniqueDefines.size());
+        if(LOG.isDebugEnabled()) {
+          LOG.debug("Parse build log OK");
+          for (List<String> allIncludes : uniqueIncludes.values()) {
+            if (!allIncludes.isEmpty()) {
+              LOG.debug("Includes folders ({})='{}'", allIncludes.size(), allIncludes);
+            }
+          }
+          for (Set<String> allDefines : uniqueDefines.values()) {
+            if (!allDefines.isEmpty()) {
+              LOG.debug("Defines ({})='{}'", allDefines.size(), allDefines);
+            }
+          }
+        }
       } else {
         LOG.error("Compilation log not found: '{}'", buildLog.getAbsolutePath());
       }
     }
+
   }
 
   public Charset getEncoding() {
     return super.getCharset();
   }
 }
+
