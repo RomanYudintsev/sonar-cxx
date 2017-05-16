@@ -25,6 +25,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
+
+import javax.annotation.Nullable;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.sonar.api.batch.sensor.Sensor;
@@ -43,7 +46,7 @@ import org.sonar.cxx.CxxLanguage;
  * common logic such as finding the reports and saving issues in SonarQube
  */
 public abstract class CxxReportSensor implements Sensor {
-  public static final Logger LOG = Loggers.get(CxxReportSensor.class);
+  private static final Logger LOG = Loggers.get(CxxReportSensor.class);
   private final Set<String> notFoundFiles = new HashSet<>();
   private final Set<String> uniqueIssues = new HashSet<>();
   private int violationsCount;
@@ -121,6 +124,23 @@ public abstract class CxxReportSensor implements Sensor {
     return value;
   }
 
+  public static String resolveFilename(final String baseDir, final String filename) {
+
+    // Normalization can return null if path is null, is invalid, or is a path with back-ticks outside known directory structure
+    String normalizedPath = FilenameUtils.normalize(filename);
+    if ((normalizedPath != null) && (new File(normalizedPath).isAbsolute())) {
+      return normalizedPath;
+    }
+
+    // Prefix with absolute module base dir, attempt normalization again -- can still get null here
+    normalizedPath = FilenameUtils.normalize(baseDir + File.separator + filename);
+    if (normalizedPath != null) {
+      return normalizedPath;
+    }
+
+    return null;
+  }
+
   public static List<File> getReports(CxxLanguage language,
           final File moduleBaseDir,
           String genericReportKeyData) {
@@ -131,19 +151,13 @@ public abstract class CxxReportSensor implements Sensor {
       return reports;
     }
     
-    List<String> reportPaths = Arrays.asList(language.getStringArrayOption(genericReportKeyData));
+    String reportPathStrings[] = language.getStringArrayOption(genericReportKeyData);
+    List<String> reportPaths = Arrays.asList((reportPathStrings != null) ? reportPathStrings : new String[] {});
     if (!reportPaths.isEmpty()) {
       List<String> includes = new ArrayList<>();
       for (String reportPath : reportPaths) {
-        // Normalization can return null if path is null, is invalid, or is a path with back-ticks outside known directory structure
-        String normalizedPath = FilenameUtils.normalize(reportPath);
-        if (normalizedPath != null && new File(normalizedPath).isAbsolute()) {
-          includes.add(normalizedPath);
-          continue;
-        }
 
-        // Prefix with absolute module base dir, attempt normalization again -- can still get null here
-        normalizedPath = FilenameUtils.normalize(moduleBaseDir.getAbsolutePath() + File.separator + reportPath);
+        String normalizedPath = resolveFilename(moduleBaseDir.getAbsolutePath(), reportPath);
         if (normalizedPath != null) {
           includes.add(normalizedPath);
           continue;
@@ -186,9 +200,8 @@ public abstract class CxxReportSensor implements Sensor {
      * @param ruleId
      * @param msg
    */
-  public void saveUniqueViolation(SensorContext sensorContext, String ruleRepoKey, String file,
-          String line, String ruleId, String msg) {
-
+  public void saveUniqueViolation(SensorContext sensorContext, String ruleRepoKey,
+                                  @Nullable String file, @Nullable String line, String ruleId, String msg) {
     if (uniqueIssues.add(file + line + ruleId + msg)) { // StringBuilder is slower
       saveViolation(sensorContext, ruleRepoKey, file, line, ruleId, msg);
     }
@@ -201,9 +214,8 @@ public abstract class CxxReportSensor implements Sensor {
    * according parameters ('file' = null for project level, 'line' = null for
    * file-level)
    */
-  private void saveViolation(SensorContext sensorContext, String ruleRepoKey, String filename, String line,
-          String ruleId, String msg) {
-      
+  private void saveViolation(SensorContext sensorContext, String ruleRepoKey, 
+                            @Nullable String filename, @Nullable String line, String ruleId, String msg) {
     // handles file="" situation -- file level
     if ((filename != null) && (!filename.isEmpty())) {
       String root = sensorContext.fileSystem().baseDir().getAbsolutePath();
@@ -215,7 +227,6 @@ public abstract class CxxReportSensor implements Sensor {
             int lines = inputFile.lines();
             int lineNr = getLineAsInt(line, lines);
             String repoKey = ruleRepoKey + this.language.getRepositorySuffix();
-            LOG.info("Repository to save: {}", repoKey);
             NewIssue newIssue = sensorContext
                     .newIssue()
                     .forRule(RuleKey.of(repoKey, ruleId));
@@ -227,7 +238,7 @@ public abstract class CxxReportSensor implements Sensor {
             newIssue.at(location);
             newIssue.save();
             violationsCount++;
-          } catch (Exception ex) { //NOSONAR
+          } catch (Exception ex) {
             LOG.error("Could not add the issue '{}', skipping issue", ex.getMessage());
             CxxUtils.validateRecovery(ex, this.language);
           }
@@ -246,14 +257,14 @@ public abstract class CxxReportSensor implements Sensor {
         newIssue.at(location);
         newIssue.save();
         violationsCount++;
-      } catch (Exception ex) { //NOSONAR
-        LOG.error("Could not add the issue '{}', skipping issue", ex.getMessage());
+      } catch (Exception ex) {
+        LOG.error("Could not add the issue '{}' for rule '{}:{}', skipping issue", ex.getMessage(), ruleRepoKey, ruleId);
         CxxUtils.validateRecovery(ex, this.language);
       }
     }
   }
 
-  private int getLineAsInt(String line, int maxLine) {
+  private int getLineAsInt(@Nullable String line, int maxLine) {
     int lineNr = 0;
     if (line != null) {
       try {
@@ -273,9 +284,9 @@ public abstract class CxxReportSensor implements Sensor {
   }
 
   protected void processReport(final SensorContext context, File report)
-    throws Exception { //NOSONAR
+    throws Exception {
   }
 
-  abstract protected String reportPathKey();
-  abstract protected String getSensorKey();
+  protected abstract String reportPathKey();
+  protected abstract String getSensorKey();
 }
