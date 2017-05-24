@@ -27,7 +27,9 @@ import org.sonar.api.measures.Metrics;
 import org.sonar.cxx.CxxLanguage;
 import org.sonar.cxx.sensors.clangsa.CxxClangSASensor;
 import org.sonar.cxx.sensors.clangtidy.CxxClangTidySensor;
-import org.sonar.cxx.sensors.compiler.CxxCompilerSensor;
+import org.sonar.cxx.sensors.compiler.CxxCompilerClangSensor;
+import org.sonar.cxx.sensors.compiler.CxxCompilerGccSensor;
+import org.sonar.cxx.sensors.compiler.CxxCompilerVcSensor;
 import org.sonar.cxx.sensors.cppcheck.CxxCppCheckSensor;
 import org.sonar.cxx.sensors.drmemory.CxxDrMemorySensor;
 import org.sonar.cxx.sensors.other.CxxOtherSensor;
@@ -91,7 +93,9 @@ public class CxxMetrics implements Metrics {
       .create();
     saveMetric(PUBLIC_UNDOCUMENTED_API_KEY, metric);
 
-    saveMetric(CxxCompilerSensor.KEY, buildReportMetric(CxxCompilerSensor.KEY, "Compiler issues"));
+    saveMetric(CxxCompilerVcSensor.COMPILER_KEY, buildReportMetric(CxxCompilerVcSensor.COMPILER_KEY, "Compiler Vc issues"));
+    saveMetric(CxxCompilerGccSensor.COMPILER_KEY, buildReportMetric(CxxCompilerGccSensor.COMPILER_KEY, "Compiler GCC issues"));
+    saveMetric(CxxCompilerClangSensor.COMPILER_KEY, buildReportMetric(CxxCompilerClangSensor.COMPILER_KEY, "Compiler Clang issues"));
     saveMetric(CxxCppCheckSensor.KEY, buildReportMetric(CxxCppCheckSensor.KEY, "CppCheck issues"));
     saveMetric(CxxOtherSensor.KEY, buildReportMetric(CxxOtherSensor.KEY, "Other tools issues"));
     saveMetric(CxxPCLintSensor.KEY, buildReportMetric(CxxPCLintSensor.KEY, "PC-Lint issues"));

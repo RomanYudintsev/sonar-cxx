@@ -19,10 +19,6 @@
  */
 package org.sonar.cxx.sensors.compiler;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.LinkedList;
-import java.util.List;
 import org.junit.Assert;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -34,7 +30,16 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.profiles.RulesProfile;
 import org.sonar.cxx.CxxLanguage;
 
-public class MockCxxCompilerSensor extends CxxCompilerSensor {
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+
+public class MockCxxCompilerClangSensor extends CxxCompilerClangSensor {
 
   private final List<CompilerParser.Warning> warnings;
   public List<CompilerParser.Warning> savedWarnings;
@@ -65,7 +70,7 @@ public class MockCxxCompilerSensor extends CxxCompilerSensor {
     return compileParser;
   }
 
-  public MockCxxCompilerSensor(CxxLanguage language, FileSystem fs, RulesProfile profile, List<CompilerParser.Warning> warningsToProcess) {
+  public MockCxxCompilerClangSensor(CxxLanguage language, FileSystem fs, RulesProfile profile, List<CompilerParser.Warning> warningsToProcess) {
     super(language);
 
     warnings = warningsToProcess;

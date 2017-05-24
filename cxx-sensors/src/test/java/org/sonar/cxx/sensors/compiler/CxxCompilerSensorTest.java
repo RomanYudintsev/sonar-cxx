@@ -66,7 +66,7 @@ public class CxxCompilerSensorTest {
     context.fileSystem().add(TestInputFileBuilder.create("ProjectKey", "src/zipmanager.cpp")
       .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n").build());
 
-    CxxCompilerSensor sensor = new CxxCompilerSensor(language);
+    CxxCompilerGccSensor sensor = new CxxCompilerGccSensor(language);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(4);
   }
@@ -83,7 +83,24 @@ public class CxxCompilerSensorTest {
     context.fileSystem().add(TestInputFileBuilder.create("ProjectKey", "zipmanager.cpp")
       .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n").build());
 
-    CxxCompilerSensor sensor = new CxxCompilerSensor(language);
+    CxxCompilerVcSensor sensor = new CxxCompilerVcSensor(language);
+    sensor.execute(context);
+    assertThat(context.allIssues()).hasSize(9);
+  }
+
+  @Test
+  public void shouldReportACorrectClangViolations() {
+    CxxLanguage language = TestUtils.mockCxxLanguage();
+    when(language.getStringOption(CxxCompilerClangSensor.PARSER_KEY_DEF)).thenReturn(CxxCompilerVcParser.COMPILER_KEY);
+    when(language.getStringArrayOption(CxxCompilerClangSensor.REPORT_PATH_KEY))
+            .thenReturn(new String [] { fs.baseDir().getAbsolutePath() + "/compiler-reports/clanglog"});
+    when(language.getStringOption(CxxCompilerClangSensor.REPORT_CHARSET_DEF)).thenReturn("UTF-16");
+
+    SensorContextTester context = SensorContextTester.create(fs.baseDir());
+    context.fileSystem().add(new DefaultInputFile("myProjectKey", "zipmanager.cpp")
+            .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n"));
+
+    CxxCompilerClangSensor sensor = new CxxCompilerClangSensor(language);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(9);
   }
@@ -102,7 +119,7 @@ public class CxxCompilerSensorTest {
     context.fileSystem().add(TestInputFileBuilder.create("ProjectKey", "Server/source/zip/zipmanager.cpp")
       .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n").build());
 
-    CxxCompilerSensor sensor = new CxxCompilerSensor(language);
+    CxxCompilerVcSensor sensor = new CxxCompilerVcSensor(language);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(9);
   }
@@ -120,7 +137,7 @@ public class CxxCompilerSensorTest {
     context.fileSystem().add(TestInputFileBuilder.create("ProjectKey", "Server/source/zip/zipmanager.cpp")
       .setLanguage("cpp").initMetadata("asd\nasdas\nasda\n").build());
 
-    CxxCompilerSensor sensor = new CxxCompilerSensor(language);
+    CxxCompilerVcSensor sensor = new CxxCompilerVcSensor(language);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(9);
   }
@@ -134,7 +151,7 @@ public class CxxCompilerSensorTest {
       new CompilerParser.Warning(null, null, "id4", null)
     );
 
-    MockCxxCompilerSensor sensor = new MockCxxCompilerSensor(language, fs, profile, warnings);
+    MockCxxCompilerVcSensor sensor = new MockCxxCompilerVcSensor(language, fs, profile, warnings);
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
     sensor.processReport(context, null);
 
