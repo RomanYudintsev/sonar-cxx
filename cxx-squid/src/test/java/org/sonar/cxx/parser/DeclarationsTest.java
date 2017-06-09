@@ -22,9 +22,6 @@ package org.sonar.cxx.parser;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
 import org.junit.Test;
-import static org.sonar.cxx.parser.CxxGrammarImpl.namedNamespaceDefinition;
-import static org.sonar.cxx.parser.CxxGrammarImpl.nestedNamespaceDefinition;
-import static org.sonar.cxx.parser.CxxGrammarImpl.unnamedNamespaceDefinition;
 
 public class DeclarationsTest extends ParserBaseTest {
 
@@ -109,16 +106,24 @@ public class DeclarationsTest extends ParserBaseTest {
     p.setRootRule(g.rule(CxxGrammarImpl.simpleDeclaration));
 
     mockRule(CxxGrammarImpl.attributeSpecifierSeq);
-    mockRule(CxxGrammarImpl.simpleDeclSpecifierSeq);
+    mockRule(CxxGrammarImpl.declSpecifierSeq);
     mockRule(CxxGrammarImpl.initDeclaratorList);
+    mockRule(CxxGrammarImpl.refQualifier);
+    mockRule(CxxGrammarImpl.identifierList);
+    mockRule(CxxGrammarImpl.initializer);
 
     assertThat(p).matches(";");
     assertThat(p).matches("initDeclaratorList ;");
-    assertThat(p).matches("simpleDeclSpecifierSeq ;");
-    assertThat(p).matches("simpleDeclSpecifierSeq initDeclaratorList ;");
+    assertThat(p).matches("declSpecifierSeq ;");
+    assertThat(p).matches("declSpecifierSeq initDeclaratorList ;");
 
     assertThat(p).matches("attributeSpecifierSeq initDeclaratorList ;");
-    assertThat(p).matches("attributeSpecifierSeq simpleDeclSpecifierSeq initDeclaratorList ;");
+    assertThat(p).matches("attributeSpecifierSeq declSpecifierSeq initDeclaratorList ;");
+    
+    assertThat(p).matches("declSpecifierSeq [ identifierList ] initializer ;");
+    assertThat(p).matches("attributeSpecifierSeq declSpecifierSeq [ identifierList ] initializer ;");
+    assertThat(p).matches("declSpecifierSeq refQualifier [ identifierList ] initializer ;");
+    assertThat(p).matches("attributeSpecifierSeq declSpecifierSeq refQualifier [ identifierList ] initializer ;");
   }
 
   @Test
@@ -169,6 +174,7 @@ public class DeclarationsTest extends ParserBaseTest {
     assertThat(p).matches("auto f() -> int(*)[4];");
     assertThat(p).matches("auto fpif(int) -> int(*)(int);");
 
+    assertThat(p).matches("auto[a, b] = f();");
   }
 
   @Test
@@ -185,7 +191,6 @@ public class DeclarationsTest extends ParserBaseTest {
     p.setRootRule(g.rule(CxxGrammarImpl.declSpecifier));
 
     assertThat(p).matches("register"); // a storage class
-    assertThat(p).matches("inline"); // a function specifier
     assertThat(p).matches("friend"); // a function specifier
     assertThat(p).matches("void"); // a built-in type
 
@@ -193,7 +198,8 @@ public class DeclarationsTest extends ParserBaseTest {
     assertThat(p).matches("friend");
     assertThat(p).matches("typedef");
     assertThat(p).matches("constexpr");
-
+    assertThat(p).matches("inline");
+ 
     // enum specifier
     assertThat(p).matches("enum foo { MONDAY=1 }");
 
@@ -413,7 +419,7 @@ public class DeclarationsTest extends ParserBaseTest {
   @Test
   public void enclosingNamespaceSpecifier() {
     p.setRootRule(g.rule(CxxGrammarImpl.enclosingNamespaceSpecifier));
-        
+
     assertThat(p)
         .matches("IDENTIFIER")
         .matches("IDENTIFIER :: IDENTIFIER")
@@ -425,6 +431,7 @@ public class DeclarationsTest extends ParserBaseTest {
     p.setRootRule(g.rule(CxxGrammarImpl.namespaceDefinition));
 
     assertThat(p).matches("namespace MyLib { double readAndProcessSum (std::istream&); }");
+    assertThat(p).matches("namespace A::B::C { int i; }");
   }
 
   @Test
