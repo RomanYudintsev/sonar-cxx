@@ -58,7 +58,11 @@ import org.sonar.squidbridge.SquidAstVisitorContext;
 import static com.sonar.sslr.api.GenericTokenType.EOF;
 import static com.sonar.sslr.api.GenericTokenType.IDENTIFIER;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import org.sonar.cxx.CxxLanguage;
 
@@ -311,25 +315,27 @@ public class CxxPreprocessor extends Preprocessor {
   }
 
   private File currentContextFile;
+  private String rootFilePath;
 
   @Override
   public PreprocessorAction process(List<Token> tokens) { //@todo: deprecated PreprocessorAction
     Token token = tokens.get(0);
     TokenType ttype = token.getType();
+
     File file = getFileUnderAnalysis();
-    String filePath = file == null ? token.getURI().toString() : file.getAbsolutePath();
+    rootFilePath = file == null ? token.getURI().toString() : file.getAbsolutePath();
 
     if (context.getFile() != currentContextFile) { 
       currentContextFile = context.getFile();
       compilationUnitSettings = conf.getCompilationUnitSettings(currentContextFile.getAbsolutePath());
 
       if (compilationUnitSettings != null) {
-        LOG.debug("compilation unit settings for: '{}'", filePath);
+        LOG.debug("compilation unit settings for: '{}'", rootFilePath);
       } else {
         compilationUnitSettings = conf.getGlobalCompilationUnitSettings();
 
         if (compilationUnitSettings != null) {
-          LOG.debug("global compilation unit settings for: '{}'", filePath);
+          LOG.debug("global compilation unit settings for: '{}'", rootFilePath);
         }
       }
 
@@ -386,7 +392,7 @@ public class CxxPreprocessor extends Preprocessor {
         }
       } else {
         // Use global settings
-        LOG.debug("global settings for: '{}'", filePath);
+        LOG.debug("global settings for: '{}'", rootFilePath);
         if (isCFile(currentContextFile.getAbsolutePath())) {
           //Create macros to replace C++ keywords when parsing C files
           registerMacros(StandardDefinitions.compatibilityMacros());
@@ -411,15 +417,15 @@ public class CxxPreprocessor extends Preprocessor {
       AstNodeType lineKind = lineAst.getType();
 
       if (lineKind.equals(ifdefLine)) {
-        return handleIfdefLine(lineAst, token, filePath);
+        return handleIfdefLine(lineAst, token, rootFilePath);
       } else if (lineKind.equals(ifLine)) {
-        return handleIfLine(lineAst, token, filePath);
+        return handleIfLine(lineAst, token, rootFilePath);
       } else if (lineKind.equals(endifLine)) {
-        return handleEndifLine(token, filePath);
+        return handleEndifLine(token, rootFilePath);
       } else if (lineKind.equals(elseLine)) {
-        return handleElseLine(token, filePath);
+        return handleElseLine(token, rootFilePath);
       } else if (lineKind.equals(elifLine)) {
-        return handleElIfLine(lineAst, token, filePath);
+        return handleElIfLine(lineAst, token, rootFilePath);
       }
 
       if (currentFileState.skipPreprocessorDirectives) {
@@ -427,9 +433,9 @@ public class CxxPreprocessor extends Preprocessor {
       }
 
       if (lineKind.equals(defineLine)) {
-        return handleDefineLine(lineAst, token, filePath);
+        return handleDefineLine(lineAst, token, rootFilePath);
       } else if (lineKind.equals(includeLine)) {
-        return handleIncludeLine(lineAst, token, filePath, conf.getCharset());
+        return handleIncludeLine(lineAst, token, rootFilePath, conf.getCharset());
       } else if (lineKind.equals(undefLine)) {
         return handleUndefLine(lineAst, token);
       }
@@ -445,7 +451,7 @@ public class CxxPreprocessor extends Preprocessor {
       }
 
       if (!ttype.equals(STRING) && !ttype.equals(NUMBER)) {
-        return handleIdentifiersAndKeywords(tokens, token, filePath);
+        return handleIdentifiersAndKeywords(tokens, token, rootFilePath);
       }
     }
 
@@ -797,6 +803,12 @@ public class CxxPreprocessor extends Preprocessor {
     return tokensConsumedMatchingArgs;
   }
 
+  public Boolean expandHasIncludeExpression(String macroName, AstNode exprAst) {
+    File file = getFileUnderAnalysis();
+    String filePath = file == null ? rootFilePath : file.getAbsolutePath();
+    return findIncludedFile(exprAst, exprAst.getToken(), filePath) != null;
+  }
+
   private List<Token> expandMacro(String macroName, String macroExpression) {
     // C++ standard 16.3.4/2 Macro Replacement - Rescanning and further replacement
     List<Token> tokens = null;
@@ -935,17 +947,18 @@ public class CxxPreprocessor extends Preprocessor {
           while (j > 0 && body.get(j - 1).getType().equals(WS)) {
             j--;
           }
-          if (j == 0 || !"##".equals(body.get(--j).getValue())) {
-            continue;
-          }
-          int k = j;
-          while (j > 0 && body.get(j - 1).getType().equals(WS)) {
-            j--;
-          }
-          if (j > 0 && ",".equals(body.get(j - 1).getValue())) {
-            newTokens.remove(newTokens.size() - 1 + j - i); // remove the comma
-            newTokens.remove(newTokens.size() - 1 + k - i); // remove the paste
-                                                            // operator
+          if (j > 0 && "##".equals(body.get(j - 1).getValue())) {
+            int k = --j;
+            while (j > 0 && body.get(j - 1).getType().equals(WS)) {
+              j--;
+            }
+            if (j > 0 && ",".equals(body.get(j - 1).getValue())) {
+              newTokens.remove(newTokens.size() - 1 + j - i); // remove the comma
+              newTokens.remove(newTokens.size() - 1 + k - i); // remove the paste operator
+            }
+          } else if (j > 0 && ",".equals(body.get(j - 1).getValue())) {
+            // Got empty variadic args, remove comma
+            newTokens.remove(newTokens.size() - 1 + j - i);
           }
         } else if (index < arguments.size()) {
           // token pasting operator?
@@ -1012,19 +1025,6 @@ public class CxxPreprocessor extends Preprocessor {
           newTokens.add(n, Token.builder().setLine(newTokens.get(n).getLine()).setColumn(newTokens.get(n).getColumn())
           .setURI(newTokens.get(n).getURI()).setValueAndOriginalValue("\"\"").setType(STRING)
           .setGeneratedCode(true).build());
-          break;
-        } else {
-          break;
-        }
-      }
-    }
-    // drop COMMA from sequence COMMA "," BR ")"
-    if (newTokens.size() > 2 && newTokens.get(newTokens.size() - 1).getType().equals(BR_RIGHT)) {
-      for (int n = newTokens.size() - 2; n != 0; n--) {
-        if (newTokens.get(n).getType().equals(WS)) {
-          newTokens.remove(n);
-        } else if (newTokens.get(n).getType().equals(COMMA)) {
-          newTokens.remove(n);
           break;
         } else {
           break;
@@ -1240,7 +1240,8 @@ public class CxxPreprocessor extends Preprocessor {
       String includeBody = serialize(stripEOF(node.getTokens()), "");
       String expandedIncludeBody = serialize(stripEOF(CxxLexer.create(this.language, this).lex(includeBody)), "");
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Include resolve macros: includeBody '{}' - expandedIncludeBody: '{}'", includeBody, expandedIncludeBody);
+        LOG.trace("Include resolve macros: includeBody '{}' - expandedIncludeBody: '{}'", 
+                  includeBody, expandedIncludeBody);
       }
 
       boolean parseError = false;
@@ -1251,9 +1252,13 @@ public class CxxPreprocessor extends Preprocessor {
         parseError = true;
       }
 
-      if (parseError || ((includeBodyAst != null) && includeBodyAst.getFirstDescendant(CppGrammar.includeBodyFreeform) != null)) {
+      if (parseError || ((includeBodyAst != null) 
+          && includeBodyAst.getFirstDescendant(CppGrammar.includeBodyFreeform) != null)) {
         LOG.warn("[{}:{}]: cannot parse included filename: '{}'",
           new Object[]{currFileName, token.getLine(), expandedIncludeBody});
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Token : {}", token.toString());
+        }
         return null;
       }
 
@@ -1262,7 +1267,16 @@ public class CxxPreprocessor extends Preprocessor {
 
     if (includedFileName != null) {
       File file = getFileUnderAnalysis();
-      String dir = file == null ? "" : file.getParent();
+      String dir;
+      if (file != null) {
+        dir = file.getParent();
+      } else {
+        try {
+          dir = Paths.get(new URI(currFileName)).getParent().toString();
+        } catch (IllegalArgumentException | FileSystemNotFoundException | SecurityException | URISyntaxException e) {
+          dir = "";
+        }
+      }
       includedFile = getCodeProvider().getSourceCodeFile(includedFileName, dir, quoted);
     }
 
@@ -1286,6 +1300,11 @@ public class CxxPreprocessor extends Preprocessor {
 
   class PreprocessorRuntimeException extends RuntimeException {
     
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -6568372484065119533L;
+
     public PreprocessorRuntimeException(String message) {
       super(message);
     }

@@ -22,103 +22,190 @@ package org.sonar.cxx.sensors.coverage;
 import org.sonar.cxx.sensors.coverage.CxxCoverageSensor;
 import org.sonar.cxx.sensors.coverage.CxxCoverageCache;
 import static org.fest.assertions.Assertions.assertThat;
+
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
-import org.sonar.api.config.Settings;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-
+import org.sonar.api.config.Settings;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.junit.Before;
+import org.junit.Test;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
 import org.sonar.api.batch.sensor.coverage.CoverageType;
 import org.sonar.cxx.CxxLanguage;
-import org.sonar.cxx.sensors.utils.CxxUtils;
 import org.sonar.cxx.sensors.utils.TestUtils;
 
 public class CxxBullseyeCoverageSensorTest {
+  private static final Logger LOG = Loggers.get(CxxBullseyeCoverageSensorTest.class);
   private CxxCoverageSensor sensor;
   private DefaultFileSystem fs;
-
+  private Map<InputFile, Set<Integer>> linesOfCodeByFile = new HashMap<>();
+  private CxxLanguage language;
+  
   @Before
   public void setUp() {
     fs = TestUtils.mockFileSystem();
+    language = TestUtils.mockCxxLanguage();
+//    when(language.getPluginProperty(CxxCoverageSensor.REPORT_PATHS_KEY))
+//    .thenReturn("sonar.cxx." + CxxCoverageSensor.REPORT_PATHS_KEY);
+    when(language.getPluginProperty(CxxCoverageSensor.REPORT_PATH_KEY))
+    .thenReturn("sonar.cxx." + CxxCoverageSensor.REPORT_PATH_KEY);
+    when(language.getPluginProperty(CxxCoverageSensor.IT_REPORT_PATH_KEY))
+    .thenReturn("sonar.cxx." + CxxCoverageSensor.IT_REPORT_PATH_KEY);
+    when(language.getPluginProperty(CxxCoverageSensor.OVERALL_REPORT_PATH_KEY))
+    .thenReturn("sonar.cxx." + CxxCoverageSensor.OVERALL_REPORT_PATH_KEY);
+    when(language.getPluginProperty(CxxCoverageSensor.FORCE_ZERO_COVERAGE_KEY))
+    .thenReturn("sonar.cxx." + CxxCoverageSensor.FORCE_ZERO_COVERAGE_KEY);
+
+    //    when(language.hasKey(CxxCoverageSensor.REPORT_PATHS_KEY)).thenReturn(true);
+    when(language.hasKey(CxxCoverageSensor.REPORT_PATH_KEY)).thenReturn(true);
+    when(language.hasKey(CxxCoverageSensor.IT_REPORT_PATH_KEY)).thenReturn(true);
+    when(language.hasKey(CxxCoverageSensor.OVERALL_REPORT_PATH_KEY)).thenReturn(true);
   }
 
-  //@Test
+  @Test
   public void shouldReportCorrectCoverage() {
-    Settings settings = new Settings();
-    
+    String coverageReport = "coverage-reports/bullseye/coverage-result-bullseye.xml";
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
-    
-    settings.setProperty(CxxCoverageSensor.REPORT_PATH_KEY, "coverage-reports/bullseye/coverage-result-bullseye.xml");
-    settings.setProperty(CxxCoverageSensor.IT_REPORT_PATH_KEY, "coverage-reports/bullseye/coverage-result-bullseye.xml");
-    settings.setProperty(CxxCoverageSensor.OVERALL_REPORT_PATH_KEY, "coverage-reports/bullseye/coverage-result-bullseye.xml");
 
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "src/testclass.h").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-
-
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "src/testclass.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "main.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "testclass.h").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "testclass.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "source_1.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "src/testclass.h").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "src/testclass.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "main.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "testclass.h").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
-
-    CxxLanguage language = TestUtils.mockCxxLanguage();
-    sensor = new CxxCoverageSensor(new CxxCoverageCache(), language);
-    sensor.execute(context);
-    assertThat(context.lineHits("myProjectKey:src/testclass.cpp", CoverageType.UNIT, 7)).isEqualTo(1);
-    assertThat(context.lineHits("myProjectKey:main.cpp", CoverageType.UNIT, 7)).isEqualTo(1);
-    assertThat(context.lineHits("myProjectKey:testclass.cpp", CoverageType.UNIT, 7)).isEqualTo(1);
+    if (TestUtils.isWindows()) {
+      Settings settings = new Settings();
+      settings.setProperty(language.getPluginProperty(CxxCoverageSensor.REPORT_PATH_KEY), coverageReport);
+  //    settings.setProperty(language.getPluginProperty(CxxCoverageSensor.IT_REPORT_PATH_KEY), coverageReport);
+  //    settings.setProperty(language.getPluginProperty(CxxCoverageSensor.OVERALL_REPORT_PATH_KEY), coverageReport);
+  //    settings.setProperty(language.getPluginProperty(CxxCoverageSensor.REPORT_PATHS_KEY), coverageReport);
+  
+      context.setSettings(settings);
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "main.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "source_1.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "src/testclass.h").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "src/testclass.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "testclass.h").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "testclass.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+  
+      sensor = new CxxCoverageSensor(new CxxCoverageCache(), language, context);
+      sensor.execute(context, linesOfCodeByFile);
+  
+      assertThat(context.lineHits("ProjectKey:main.cpp", CoverageType.UNIT, 7)).isEqualTo(1);
+  
+      int[] oneHitlinesA = new int[] { 7, 12, 17, 30};
+      for (int line : oneHitlinesA) {
+        LOG.debug("Check line coverage: {}", line);
+        assertThat(context.lineHits("ProjectKey:testclass.cpp", CoverageType.UNIT, line)).isEqualTo(1);
+        assertThat(context.lineHits("ProjectKey:src/testclass.cpp", CoverageType.UNIT, line)).isEqualTo(1);
+      }
+      int[] coveredCondition = new int [] { 34, 42, 43, 46};
+      // full covered condition
+      for (int line : coveredCondition) {
+        LOG.debug("Check conditions line: {}", line);
+        assertThat(context.conditions("ProjectKey:testclass.cpp", CoverageType.UNIT, line)).isEqualTo(2);
+        assertThat(context.conditions("ProjectKey:src/testclass.cpp", CoverageType.UNIT, line)).isEqualTo(2);
+        assertThat(context.coveredConditions("ProjectKey:testclass.cpp", CoverageType.UNIT, line)).isEqualTo(2);
+        assertThat(context.coveredConditions("ProjectKey:src/testclass.cpp", CoverageType.UNIT, line)).isEqualTo(2);
+      }
+      LOG.debug("partial covered condition - line: 19"); 
+      assertThat(context.conditions("ProjectKey:testclass.cpp", CoverageType.UNIT, 19)).isEqualTo(2);
+      assertThat(context.coveredConditions("ProjectKey:testclass.cpp", CoverageType.UNIT, 19)).isEqualTo(1);
+      LOG.debug("multiple covered condition - line: 37"); 
+      // multiple covered condition
+      assertThat(context.conditions("ProjectKey:testclass.cpp", CoverageType.UNIT, 37)).isEqualTo(4);
+      assertThat(context.conditions("ProjectKey:src/testclass.cpp", CoverageType.UNIT, 37)).isEqualTo(4);
+      assertThat(context.coveredConditions("ProjectKey:testclass.cpp", CoverageType.UNIT, 37)).isEqualTo(4);
+      assertThat(context.coveredConditions("ProjectKey:src/testclass.cpp", CoverageType.UNIT, 37)).isEqualTo(4);
+      // ToDo check total number of hits for each file
+    }
   }
 
-  //@Test @todo
-  public void shoulParseTopLevelFiles() {
-    Settings settings = new Settings();
+  @Test
+  public void shouldParseTopLevelFiles() {
+    // read top level folder name from report file
+    String coverageReport = "coverage-reports/bullseye/bullseye-coverage-report-data-in-root-node-win.xml";
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
     if (TestUtils.isWindows()) {
-      settings.setProperty(CxxCoverageSensor.REPORT_PATH_KEY, "coverage-reports/bullseye/bullseye-coverage-report-data-in-root-node-win.xml");
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/randomfoldernamethatihopeknowmachinehas/anotherincludeattop.h")).setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/randomfoldernamethatihopeknowmachinehas/test/test.c")).setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/randomfoldernamethatihopeknowmachinehas/test2/test2.c")).setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/randomfoldernamethatihopeknowmachinehas/main.c")).setLanguage("cpp"));
-    } else {
-      settings.setProperty(CxxCoverageSensor.REPORT_PATH_KEY, "coverage-reports/bullseye/bullseye-coverage-report-data-in-root-node-linux.xml");
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/test/anotherincludeattop.h").setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/test/test/test.c").setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/test/test2/test2.c").setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/test/main.c").setLanguage("cpp"));
+      Settings settings = new Settings();
+      settings.setProperty(language.getPluginProperty(CxxCoverageSensor.REPORT_PATH_KEY), coverageReport);
+
+      context.setSettings(settings);
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "randomfoldernamethatihopeknowmachinehas/anotherincludeattop.h").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "randomfoldernamethatihopeknowmachinehas/test/test.c").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "randomfoldernamethatihopeknowmachinehas/test2/test2.c").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+      context.fileSystem().add(new DefaultInputFile("ProjectKey", "randomfoldernamethatihopeknowmachinehas/main.c").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"));
+
+      sensor = new CxxCoverageSensor(new CxxCoverageCache(), language, context);
+      sensor.execute(context, linesOfCodeByFile);
+
+      assertThat(context.lineHits("ProjectKey:randomfoldernamethatihopeknowmachinehas/test/test.c", CoverageType.UNIT, 4)).isEqualTo(1);
+      assertThat(context.conditions("ProjectKey:randomfoldernamethatihopeknowmachinehas/test/test.c", CoverageType.UNIT, 7)).isEqualTo(2);
     }
-    CxxLanguage language = TestUtils.mockCxxLanguage();    
-    sensor = new CxxCoverageSensor(new CxxCoverageCache(), language);
-    sensor.execute(context);
-    verify(context, times(28)).newCoverage();
   }
 
-  //@Test @todo
-  public void shoulCorrectlyHandleDriveLettersWithoutSlash() {
-    Settings settings = new Settings();
+  @Test
+  public void shouldReportAllProbes() {
+
+    String coverageReport = "coverage-reports/bullseye/bullseye-coverage-Linux-V8.9.60.xml";
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
+
     if (TestUtils.isWindows()) {
-      settings.setProperty(CxxCoverageSensor.REPORT_PATH_KEY, "coverage-reports/bullseye/bullseye-coverage-drive-letter-without-slash-win.xml");
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/main.c")).setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/randomfoldernamethatihopeknowmachinehas/test.c")).setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/randomfoldernamethatihopeknowmachinehas2/test2.c")).setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", CxxUtils.normalizePath("C:/anotherincludeattop.h")).setLanguage("cpp"));
-    } else {
-      settings.setProperty(CxxCoverageSensor.REPORT_PATH_KEY, "coverage-reports/bullseye/bullseye-coverage-drive-letter-without-slash-linux.xml");
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/main.c").setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/test/test.c").setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/test2/test2.c").setLanguage("cpp"));
-      context.fileSystem().add(new DefaultInputFile("myProjectKey", "/c/anotherincludeattop.h").setLanguage("cpp"));
+      Settings settings = new Settings();
+      settings.setProperty(language.getPluginProperty(CxxCoverageSensor.REPORT_PATH_KEY), coverageReport);
+
+      context.setSettings(settings);
+      String[] fileList = new String [] {
+          "covfile/import/cereal/archives/json.hpp",
+          "covfile/import/jpeg-compressor/src/jpgd.cpp",
+          "covfile/src/main/vr_io/src/ModalityLUTJson.cpp",
+          "covfile/src/test/vr_core/Image_unittest.cpp",
+          "covfile/import/cereal/external/base64.hpp",
+          "covfile/import/cereal/details/traits.hpp",
+          "covfile/import/jpeg-compressor/src/jpge.cpp",
+          "covfile/src/main/vr_io/src/RenderingParamJson.cpp",
+          "covfile/import/cereal/external/rapidjson/prettywriter.h",
+          "covfile/import/cereal/external/rapidjson/document.h",
+          "covfile/src/main/main/main.cpp",
+          "covfile/import/cereal/details/static_object.hpp"
+      };
+      
+      StringBuilder sourceContent = new StringBuilder();
+      sourceContent.append("asd\nasdas\nasda\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+      for (int i = 0; i<4000; i++) {
+        sourceContent.append('\n');
+      }
+      
+      for (String filepath: fileList) {
+        context.fileSystem().add(new DefaultInputFile("ProjectKey", filepath).setLanguage("cpp").initMetadata(sourceContent.toString()));
+      }
+      sensor = new CxxCoverageSensor(new CxxCoverageCache(), language, context);
+      sensor.execute(context, linesOfCodeByFile);
+
+      int[] coveredCondition = new int [] { 496, 475, 524};
+
+      for (int line : coveredCondition) {
+        LOG.debug("Check conditions line: {}", line);
+        assertThat(context.conditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, line)).isEqualTo(2);
+        assertThat(context.coveredConditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, line)).isEqualTo(2);
+      }
+      assertThat(context.conditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 530)).isEqualTo(4);
+      assertThat(context.coveredConditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 530)).isEqualTo(3);
+
+      assertThat(context.conditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 483)).isEqualTo(4);
+      assertThat(context.coveredConditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 483)).isEqualTo(2);
+
+      assertThat(context.conditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 552)).isEqualTo(2);
+      assertThat(context.coveredConditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 552)).isEqualTo(1);
+
+      assertThat(context.conditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 495)).isEqualTo(2);
+      assertThat(context.coveredConditions("ProjectKey:covfile/import/cereal/archives/json.hpp", CoverageType.UNIT, 495)).isEqualTo(1);
+
     }
-    CxxLanguage language = TestUtils.mockCxxLanguage();   
-    sensor = new CxxCoverageSensor(new CxxCoverageCache(), language);
-    sensor.execute(context);
-    verify(context, times(28)).newCoverage();
   }
+
 }
+

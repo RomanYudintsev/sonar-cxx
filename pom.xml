@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>39</version>
+    <version>40</version>
   </parent>
 
   <groupId>org.sonarsource.sonarqube-plugins.cxx</groupId>
@@ -167,7 +167,7 @@
     <license.mailto>http://github.com/SonarOpenCommunity/sonar-cxx</license.mailto>
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
     <sonar.version>5.6</sonar.version>
-    <sslr.version>1.21</sslr.version>
+    <sslr.version>1.22</sslr.version>
     <sslr-squid-bridge.version>2.6.1</sslr-squid-bridge.version>
     <sonar.artifact.path>target/${project.artifactId}-${project.version}.jar</sonar.artifact.path>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -195,6 +195,11 @@
         <version>2.6</version>
       </dependency>
       <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>19.0</version>
+      </dependency>      
+      <dependency>
         <groupId>org.sonarsource.sonarqube</groupId>
         <artifactId>sonar-testing-harness</artifactId>
         <version>${sonar.version}</version>
@@ -209,6 +214,12 @@
         <groupId>org.sonarsource.sslr</groupId>
         <artifactId>sslr-testing-harness</artifactId>
         <version>${sslr.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+          </exclusion>
+        </exclusions>        
       </dependency>
       <dependency>
         <groupId>org.sonarsource.sslr-squid-bridge</groupId>
@@ -282,7 +293,7 @@
       <dependency>
         <groupId>org.sonarsource.dotnet</groupId>
         <artifactId>sonar-dotnet-tests-library</artifactId>
-        <version>1.4</version>
+        <version>1.6.0.533</version>
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
@@ -334,7 +345,7 @@
           <groupId>org.sonarsource.scanner.maven</groupId>
           <artifactId>sonar-maven-plugin</artifactId>
           <version>3.2</version>
-      </plugin>
+        </plugin>
       </plugins>
     </pluginManagement>
     <!-- To use the plugin goals in your POM or parent POM -->

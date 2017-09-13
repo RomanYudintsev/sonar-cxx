@@ -32,7 +32,6 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.cxx.CxxAstScanner;
@@ -62,7 +61,6 @@ import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.CxxLanguage;
-import org.sonar.cxx.parser.CxxParser;
 import org.sonar.cxx.sensors.compiler.CxxCompilerSensor;
 import org.sonar.cxx.sensors.coverage.CxxCoverageCache;
 import org.sonar.cxx.sensors.coverage.CxxCoverageSensor;
@@ -71,7 +69,7 @@ import org.sonar.cxx.sensors.utils.CxxReportSensor;
 import org.sonar.cxx.sensors.utils.JsonCompilationDatabase;
 import org.sonar.cxx.sensors.visitors.CxxCpdVisitor;
 import org.sonar.cxx.sensors.visitors.CxxHighlighterVisitor;
-import org.sonar.cxx.sensors.visitors.FileLinesVisitor;
+import org.sonar.cxx.sensors.visitors.CxxFileLinesVisitor;
 
 /**
  * {@inheritDoc}
@@ -99,7 +97,6 @@ public class CxxSquidSensor implements Sensor {
 
   private final FileLinesContextFactory fileLinesContextFactory;
   private final CxxChecks checks;
-  private ActiveRules rules;
 
   private AstScanner<Grammar> scanner;
   private final CxxLanguage language;
@@ -111,9 +108,8 @@ public class CxxSquidSensor implements Sensor {
   public CxxSquidSensor(CxxLanguage language,
           FileLinesContextFactory fileLinesContextFactory,
           CheckFactory checkFactory,
-          ActiveRules rules,
           @Nullable CxxCoverageCache coverageCache) {
-    this(language, fileLinesContextFactory, checkFactory, rules, null, coverageCache);    
+    this(language, fileLinesContextFactory, checkFactory, null, coverageCache);    
   }
   
   /**
@@ -122,14 +118,12 @@ public class CxxSquidSensor implements Sensor {
   public CxxSquidSensor(CxxLanguage language,
           FileLinesContextFactory fileLinesContextFactory,
           CheckFactory checkFactory,
-          ActiveRules rules,
           @Nullable CustomCxxRulesDefinition[] customRulesDefinition,
           @Nullable CxxCoverageCache coverageCache) {
     this.checks = CxxChecks.createCxxCheck(checkFactory)
       .addChecks(language.getRepositoryKey(), language.getChecks())
       .addCustomChecks(customRulesDefinition);
     this.fileLinesContextFactory = fileLinesContextFactory;
-    this.rules = rules;
     this.language = language;
            
     if (coverageCache == null) {
@@ -149,18 +143,18 @@ public class CxxSquidSensor implements Sensor {
    */
   @Override
   public void execute(SensorContext context) {       
-    Map<InputFile, Set<Integer>> linesOfCode = new HashMap<>();
+    Map<InputFile, Set<Integer>> linesOfCodeByFile = new HashMap<>();
         
     List<SquidAstVisitor<Grammar>> visitors = new ArrayList<>((Collection) checks.all());
     visitors.add(new CxxHighlighterVisitor(context));
-    visitors.add(new FileLinesVisitor(fileLinesContextFactory, context.fileSystem(), linesOfCode));
+    visitors.add(new CxxFileLinesVisitor(fileLinesContextFactory, context, linesOfCodeByFile));
     visitors.add(
             new CxxCpdVisitor(
                     context,
                     this.language.getBooleanOption(CPD_IGNORE_LITERALS_KEY),
                     this.language.getBooleanOption(CPD_IGNORE_IDENTIFIERS_KEY)));
     
-    CxxConfiguration cxxConf = createConfiguration(context.fileSystem());
+    CxxConfiguration cxxConf = createConfiguration(context.fileSystem(), context);
     this.scanner = CxxAstScanner.create(this.language, cxxConf, context,
       visitors.toArray(new SquidAstVisitor[visitors.size()]));
 
@@ -178,15 +172,20 @@ public class CxxSquidSensor implements Sensor {
         files.add(file.file());
       }
     }
+
+    if (LOG.isDebugEnabled() && !files.isEmpty()) {
+      LOG.debug("All source files (Type.MAIN): {}" , files);
+    }
+
     scanner.scanFiles(files);
-    
-    (new CxxCoverageSensor(this.cache, this.language)).execute(context, linesOfCode);
-    
+
+    (new CxxCoverageSensor(this.cache, this.language, context)).execute(context, linesOfCodeByFile);
+
     Collection<SourceCode> squidSourceFiles = scanner.getIndex().search(new QueryByType(SourceFile.class));
     save(squidSourceFiles, context);
   }
 
-  private CxxConfiguration createConfiguration(FileSystem fs) {
+  private CxxConfiguration createConfiguration(FileSystem fs, SensorContext context) {
     CxxConfiguration cxxConf = new CxxConfiguration(fs, this.language);
     cxxConf.setBaseDir(fs.baseDir().getAbsolutePath());
     String[] lines = this.language.getStringLinesOption(DEFINES_KEY);
@@ -210,7 +209,7 @@ public class CxxSquidSensor implements Sensor {
 
     String filePaths = this.language.getStringOption(CxxCompilerSensor.REPORT_PATH_KEY);
     if (filePaths != null && !"".equals(filePaths)) {
-      List<File> reports = CxxReportSensor.getReports(this.language, fs.baseDir(), CxxCompilerSensor.REPORT_PATH_KEY);
+      List<File> reports = CxxReportSensor.getReports(context.settings(), fs.baseDir(), this.language.getPluginProperty(CxxCompilerSensor.REPORT_PATH_KEY));
       cxxConf.setCompilationPropertiesWithBuildLog(reports,
         this.language.getStringOption(CxxCompilerSensor.PARSER_KEY_DEF),
         this.language.getStringOption(CxxCompilerSensor.REPORT_CHARSET_DEF));
@@ -221,7 +220,6 @@ public class CxxSquidSensor implements Sensor {
 
   private void save(Collection<SourceCode> squidSourceFiles, SensorContext context) {
     int violationsCount = 0;
-    DependencyAnalyzer dependencyAnalyzer = new DependencyAnalyzer(context, rules, this.language);
 
     for (SourceCode squidSourceFile : squidSourceFiles) {
       SourceFile squidFile = (SourceFile) squidSourceFile;
@@ -232,10 +230,9 @@ public class CxxSquidSensor implements Sensor {
       saveFunctionAndClassComplexityDistribution(inputFile, squidFile, context);
       saveFilesComplexityDistribution(inputFile, squidFile, context);
       violationsCount += saveViolations(inputFile, squidFile, context);
-      dependencyAnalyzer.addFile(inputFile, CxxParser.getIncludedFiles(ioFile), context);
     }
 
-    String metricKey = CxxMetrics.GetKey(KEY, language);
+    String metricKey = CxxMetrics.getKey(KEY, language);
     Metric metric = this.language.getMetric(metricKey);
 
     if (metric != null) {
@@ -245,8 +242,6 @@ public class CxxSquidSensor implements Sensor {
         .withValue(violationsCount)
         .save();               
     }
-    
-    dependencyAnalyzer.save(context);
   }
 
   private void saveMeasures(InputFile inputFile, SourceFile squidFile, SensorContext context) {

@@ -20,9 +20,9 @@
 package org.sonar.cxx.sensors.coverage;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -31,6 +31,7 @@ import javax.xml.stream.XMLStreamException;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.utils.PathUtils;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.sensors.utils.StaxParser;
@@ -83,7 +84,8 @@ public class BullseyeParser extends CxxCoverageParser {
     parser.parse(report);
   }
 
-  private void collectCoverageLeafNodes(String refPath, SMInputCursor folder, final Map<String, CoverageMeasures> coverageData)
+  private static void collectCoverageLeafNodes(String refPath, SMInputCursor folder, 
+                                               final Map<String, CoverageMeasures> coverageData)
     throws XMLStreamException {
 
     String correctPath = ensureRefPathIsCorrect(refPath);
@@ -94,7 +96,8 @@ public class BullseyeParser extends CxxCoverageParser {
     }
   }
 
-  private void recTreeTopWalk(File fileName, SMInputCursor folder, final Map<String, CoverageMeasures> coverageData)
+  private static void recTreeTopWalk(File fileName, SMInputCursor folder, 
+                                     final Map<String, CoverageMeasures> coverageData)
     throws XMLStreamException {
     SMInputCursor child = folder.childElementCursor();
     while (child.getNext() != null) {
@@ -105,7 +108,8 @@ public class BullseyeParser extends CxxCoverageParser {
     }
   }
 
-  private void collectCoverage2(String refPath, SMInputCursor folder, final Map<String, CoverageMeasures> coverageData)
+  private static void collectCoverage2(String refPath, SMInputCursor folder, 
+                                       final Map<String, CoverageMeasures> coverageData)
     throws XMLStreamException {
 
     String correctPath = ensureRefPathIsCorrect(refPath);
@@ -119,7 +123,7 @@ public class BullseyeParser extends CxxCoverageParser {
     }
   }
 
-  private void probWalk(SMInputCursor prob, CoverageMeasures fileMeasuresBuilderIn) throws XMLStreamException {
+  private static void probWalk(SMInputCursor prob, CoverageMeasures fileMeasuresBuilderIn) throws XMLStreamException {
     String line = prob.getAttrValue("line");
     String kind = prob.getAttrValue("kind");
     String event = prob.getAttrValue("event");
@@ -130,7 +134,7 @@ public class BullseyeParser extends CxxCoverageParser {
     prevLine = line;
   }
 
-  private void funcWalk(SMInputCursor func, CoverageMeasures fileMeasuresBuilderIn) throws XMLStreamException {
+  private static void funcWalk(SMInputCursor func, CoverageMeasures fileMeasuresBuilderIn) throws XMLStreamException {
     SMInputCursor prob = func.childElementCursor();
     while (prob.getNext() != null) {
       probWalk(prob, fileMeasuresBuilderIn);
@@ -138,14 +142,15 @@ public class BullseyeParser extends CxxCoverageParser {
     saveConditions(fileMeasuresBuilderIn);
   }
 
-  private void fileWalk(SMInputCursor file, CoverageMeasures fileMeasuresBuilderIn) throws XMLStreamException {
+  private static void fileWalk(SMInputCursor file, CoverageMeasures fileMeasuresBuilderIn) throws XMLStreamException {
     SMInputCursor func = file.childElementCursor();
     while (func.getNext() != null) {
       funcWalk(func, fileMeasuresBuilderIn);
     }
   }
 
-  private void recTreeWalk(String refPath, SMInputCursor folder, List<String> path, final Map<String, CoverageMeasures> coverageData)
+  private static void recTreeWalk(String refPath, SMInputCursor folder, List<String> path, 
+                           final Map<String, CoverageMeasures> coverageData)
     throws XMLStreamException {
 
     String correctPath = ensureRefPathIsCorrect(refPath);
@@ -156,20 +161,14 @@ public class BullseyeParser extends CxxCoverageParser {
       String name = child.getAttrValue("name");
       path.add(name);
       if ("src".equalsIgnoreCase(folderChildName)) {
-        String fileName = "";
-        Iterator<String> iterator = path.iterator();
-        while (iterator.hasNext()) {
-          fileName += iterator.next() + File.separator;
-        }
-
-        fileName = fileName.substring(0, fileName.length()-1);
-
-        if ((new File(fileName)).isAbsolute()) {
-          correctPath = "";
-        }
+        String filePath = buildPath(path, correctPath);
         CoverageMeasures fileMeasuresBuilderIn = CoverageMeasures.create();
         fileWalk(child, fileMeasuresBuilderIn);
-        coverageData.put(correctPath + fileName, fileMeasuresBuilderIn);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("lines covered: '{}':'{}'", filePath, fileMeasuresBuilderIn.getCoveredLines());
+          LOG.debug("condition covered: '{}':'{}'", filePath, fileMeasuresBuilderIn.getCoveredConditions());
+        }
+        coverageData.put(filePath, fileMeasuresBuilderIn);
       } else {
         recTreeWalk(correctPath, child, path, coverageData);
       }
@@ -177,7 +176,7 @@ public class BullseyeParser extends CxxCoverageParser {
     }
   }
 
-  private void saveConditions(CoverageMeasures fileMeasuresBuilderIn) {
+  private static void saveConditions(CoverageMeasures fileMeasuresBuilderIn) {
     if (totaldecisions > 0 || totalconditions > 0) {
       if (totalcovereddecisions == 0 && totalcoveredconditions == 0) {
         fileMeasuresBuilderIn.setHits(Integer.parseInt(prevLine), 0);
@@ -196,35 +195,68 @@ public class BullseyeParser extends CxxCoverageParser {
     totalcoveredconditions = 0;
   }
 
-  private void updateMeasures(String kind, String event, String line, CoverageMeasures fileMeasuresBuilderIn) {
+  private static void updateMeasures(String kind, String event, String line, CoverageMeasures fileMeasuresBuilderIn) {
 
-    if ("decision".equalsIgnoreCase(kind) || "condition".equalsIgnoreCase(kind)) {
-      if ("condition".equalsIgnoreCase(kind)) {
+    switch (kind.toLowerCase(Locale.ENGLISH)) {
+      case "catch":
+      case "decision":
+      case "for-range-body":
+      case "switch-label":
+      case "try":
+        totaldecisions++;
+        setTotalCoveredDecisions(event);
+        break;
+      case "condition":
         totalconditions += 2;
-        totalcoveredconditions += 1;
+        setTotalCoveredConditions(event);
+        break;
+      case "function":
         if ("full".equalsIgnoreCase(event)) {
-          totalcoveredconditions += 1;
+          fileMeasuresBuilderIn.setHits(Integer.parseInt(line), 1);
         }
-        if ("none".equalsIgnoreCase(event)) {
-          totalcoveredconditions -= 1;
-        }
-      } else {
-        totaldecisions += 1;
-        totalcovereddecisions = 1;
-        if ("full".equalsIgnoreCase(event)) {
-          totalcovereddecisions = 2;
-        }
-        if ("none".equalsIgnoreCase(event)) {
-          totalcovereddecisions = 0;
-        }
-      }
-    } else {
-      if ("full".equalsIgnoreCase(event)) {
-        fileMeasuresBuilderIn.setHits(Integer.parseInt(line), 1);
-      } else {
-        fileMeasuresBuilderIn.setHits(Integer.parseInt(line), 0);
-      }
+        break;
+      case "constant":
+        break;
+    default:
+        LOG.warn("BullseyeParser unknown probe kind '{}'", kind);
     }
+  }
+
+  /**
+   * @param event
+   */
+  private static void setTotalCoveredConditions(String event) {
+    switch (event.toLowerCase(Locale.ENGLISH)) {
+      case "full":
+        totalcoveredconditions += 2;
+        break;
+      case "true":
+      case "false":
+        totalcoveredconditions++;
+        break;
+      case "none":
+        // do nothing
+        break;
+      default:
+        LOG.warn("BullseyeParser unknown probe event '{}'", event);
+    }
+  }
+
+  /**
+   * @param event
+   */
+  private static void setTotalCoveredDecisions(String event) {
+    switch (event.toLowerCase(Locale.ENGLISH)) {
+      case "full":
+        totalcovereddecisions = 2;
+        break;
+      case "true":        
+      case "false":
+        totalcovereddecisions = 1;
+        break;
+      default:
+        totalcovereddecisions = 0;
+      }
   }
 
   @Override
@@ -232,11 +264,27 @@ public class BullseyeParser extends CxxCoverageParser {
     return getClass().getSimpleName();
   }
 
-  private String ensureRefPathIsCorrect(@Nullable String refPath) {
-    if (refPath == null || refPath.isEmpty() || refPath.endsWith(File.separator)) {
+  private static String ensureRefPathIsCorrect(@Nullable String refPath) {
+    if (refPath == null || refPath.isEmpty() ) {
       return refPath;
     }
-
-    return refPath + File.separatorChar;
+    if (refPath.endsWith("\\") || refPath.endsWith("/")) {
+      return refPath.replace('\\', '/');
+    }
+    return refPath.replace('\\', '/') + "/";
   }
+
+  /**
+   * @param path
+   * @param correctPath
+   * @return
+   */
+  private static String buildPath(List<String> path, String correctPath) {
+    String fileName = String.join(File.separator, path);
+    if (!(new File(fileName)).isAbsolute()) {
+      fileName = correctPath + fileName;
+    } 
+    return PathUtils.sanitize(fileName);
+  }
+  
 }

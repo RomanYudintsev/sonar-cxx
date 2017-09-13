@@ -151,6 +151,8 @@ public final class ExpressionEvaluator {
       return evalDefinedExpression(exprAst);
     } else if (nodeType.equals(CppGrammar.functionlikeMacro)) {
       return evalFunctionlikeMacro(exprAst);
+    } else if (nodeType.equals(CppGrammar.hasIncludeExpression)) {
+      return evalHasIncludeExpression(exprAst);      
     } else {
       LOG.error("'evalComplexAst' Unknown expression type '" + nodeType + "' for AstExt '" 
                 + exprAst.getToken() + "', assuming 0");
@@ -454,15 +456,23 @@ public final class ExpressionEvaluator {
 
     if (value == null || "".equals(value)) {
       LOG.error("Undefined functionlike macro '{}' assuming 0", macroName);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Token : {}", exprAst.toString());
+      }
       return BigInteger.ZERO;
     }
 
     return evalToInt(value, exprAst);
   }
 
+  private BigInteger evalHasIncludeExpression(AstNode exprAst) {
+    String macroName = exprAst.getFirstChild().getTokenValue();
+    return preprocessor.expandHasIncludeExpression(macroName, exprAst) ? BigInteger.ONE : BigInteger.ZERO;
+  }
+
   public static BigInteger decode(String number) {
 
-    // This fuction is only responsible for providing a string and a radix to BigInteger.
+    // This function is only responsible for providing a string and a radix to BigInteger.
     // The lexer ensures that the number has a valid format.
     
     int radix = 10;

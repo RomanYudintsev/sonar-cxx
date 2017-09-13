@@ -209,6 +209,11 @@ public class PreprocessorDirectivesTest extends ParserBaseTest {
         + "MACRO(\"error\");"))
         .equals("printf ( \"error\" ) ; EOF"));
 
+    assert (serialize(p.parse(
+        "#define MACRO(s, ...) do { printf(s, __VA_ARGS__); } while (false)\n"
+        + "int main() { MACRO(\"error\"); }"))
+        .equals("int main ( ) { do { printf ( \"error\" ) ; } while ( false ) ; } EOF"));
+
     // without whitespace after the parameter list
     assert (serialize(p.parse(
       "#define foo(a...);\n"
@@ -406,5 +411,44 @@ public class PreprocessorDirectivesTest extends ParserBaseTest {
       + "#define y (2 * x)\n"
       + "i = x;"))
       .equals("i = ( 4 + ( 2 * x ) ) ; EOF"));
+  }
+  
+  @Test
+  public void has_include() {
+    assert (serialize(p.parse(
+      "#if __has_include\n"
+      + "#   define OK 1\n"
+      + "#else\n"
+      + "#   define OK 0\n"
+      + "#endif\n"
+      + "r = OK;"))
+      .equals("r = 1 ; EOF"));
+
+    assert (serialize(p.parse(
+      "#if defined(__has_include)\n"
+      + "#   define OK 1\n"
+      + "#else\n"
+      + "#   define OK 0\n"
+      + "#endif\n"
+      + "r = OK;"))
+      .equals("r = 1 ; EOF"));
+
+    assert (serialize(p.parse(
+      "#if __has_include(<optional>)\n"
+      + "#   define OK 1\n"
+      + "#else\n"
+      + "#   define OK 0\n"
+      + "#endif\n"
+      + "r = OK;"))
+      .equals("r = 0 ; EOF"));
+
+    assert (serialize(p.parse(
+      "#if __has_include(\"optional\")\n"
+      + "#   define OK 1\n"
+      + "#else\n"
+      + "#   define OK 0\n"
+      + "#endif\n"
+      + "r = OK;"))
+      .equals("r = 0 ; EOF"));
   }
 }

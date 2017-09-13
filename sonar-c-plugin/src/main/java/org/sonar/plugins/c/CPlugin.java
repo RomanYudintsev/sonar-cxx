@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.c;
 
-import org.sonar.cxx.CxxProjectBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
@@ -27,8 +26,8 @@ import org.sonar.api.Plugin;
 
 import org.sonar.api.PropertyType;
 import org.sonar.api.batch.bootstrap.ProjectDefinition;
-import org.sonar.api.batch.rule.ActiveRules;
 import org.sonar.api.batch.rule.CheckFactory;
+import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.config.Settings;
 import org.sonar.api.measures.FileLinesContextFactory;
@@ -37,6 +36,8 @@ import org.sonar.api.resources.Qualifiers;
 import org.sonar.api.server.rule.RulesDefinitionXmlLoader;
 import org.sonar.cxx.sensors.clangtidy.CxxClangTidyRuleRepository;
 import org.sonar.cxx.sensors.clangtidy.CxxClangTidySensor;
+import org.sonar.cxx.sensors.clangsa.CxxClangSARuleRepository;
+import org.sonar.cxx.sensors.clangsa.CxxClangSASensor;
 import org.sonar.cxx.sensors.compiler.CxxCompilerGccParser;
 import org.sonar.cxx.sensors.compiler.CxxCompilerGccRuleRepository;
 import org.sonar.cxx.sensors.compiler.CxxCompilerSensor;
@@ -287,6 +288,21 @@ public final class CPlugin implements Plugin {
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
       .index(14)
+      .build(),
+      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxClangSASensor.REPORT_PATH_KEY)
+      .name("Clang Static analyzer analyzer report(s)")
+      .description("Path to Clang Static Analyzer reports, relative to projects root."
+        + " If neccessary, <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> are at your service.")
+      .subCategory(subcateg)
+      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+      .index(15)
+      .build(),
+      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxClangSARuleRepository.CUSTOM_RULES_KEY)
+      .name("Clang-SA custom rules")
+      .description("NO DESC")
+      .type(PropertyType.TEXT)
+      .subCategory(subcateg)
+      .index(16)
       .build()
     ));
   }
@@ -445,7 +461,6 @@ public final class CPlugin implements Plugin {
     List<Object> l = new ArrayList<>();
 
     // plugin elements
-    l.add(CxxProjectBuilder.class);
     l.add(CLanguage.class);
     l.add(CDefaultProfile.class);
     l.add(CRuleRepository.class);
@@ -483,6 +498,7 @@ public final class CPlugin implements Plugin {
     l.add(CxxVeraxxSensorImpl.class);
     l.add(CxxValgrindSensorImpl.class);
     l.add(CxxClangTidySensorImpl.class);
+    l.add(CxxClangSASensorImpl.class);
     l.add(CxxExternalRulesSensorImpl.class);
 
     // test sensors
@@ -501,6 +517,7 @@ public final class CPlugin implements Plugin {
     l.add(CxxValgrindRuleRepositoryImpl.class);   
     l.add(CxxExternalRuleRepositoryImpl.class);    
     l.add(CxxClangTidyRuleRepositoryImpl.class);
+    l.add(CxxClangSARuleRepositoryImpl.class);
     
     return l;
   }
@@ -571,78 +588,89 @@ public final class CPlugin implements Plugin {
     }
   }
   
+  public static class CxxClangSARuleRepositoryImpl extends CxxClangSARuleRepository {
+    public CxxClangSARuleRepositoryImpl(ServerFileSystem fileSystem, RulesDefinitionXmlLoader xmlRuleLoader, Settings settings) {
+      super(fileSystem, xmlRuleLoader, new CLanguage(settings));      
+    }
+  }
+  
   public static class CxxSquidSensorImpl extends CxxSquidSensor {
     public CxxSquidSensorImpl(Settings settings,
             FileLinesContextFactory fileLinesContextFactory,
             CheckFactory checkFactory,
-            ActiveRules rules,
             CxxCoverageAggregator coverageCache) {
-      super(new CLanguage(settings), fileLinesContextFactory, checkFactory, rules, coverageCache);      
+      super(new CLanguage(settings), fileLinesContextFactory, checkFactory, coverageCache);      
     }
   }
     
   public static class CxxRatsSensorImpl extends CxxRatsSensor {
     public CxxRatsSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   }
   
   public static class CxxXunitSensorImpl extends CxxXunitSensor {
     public CxxXunitSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   }
   
   public static class CxxCoverageSensorImpl extends CxxCoverageSensor {
-    public CxxCoverageSensorImpl(Settings settings, CxxCoverageAggregator cache) {
-      super(cache, new CLanguage(settings));      
+    public CxxCoverageSensorImpl(Settings settings, CxxCoverageAggregator cache, SensorContext context) {
+      super(cache, new CLanguage(settings), context);      
     }
   } 
   
   public static class CxxCppCheckSensorImpl extends CxxCppCheckSensor {
     public CxxCppCheckSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   } 
   
   public static class CxxPCLintSensorImpl extends CxxPCLintSensor {
     public CxxPCLintSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   } 
   
   public static class CxxDrMemorySensorImpl extends CxxDrMemorySensor {
     public CxxDrMemorySensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   } 
   
   public static class CxxCompilerSensorImpl extends CxxCompilerSensor {
     public CxxCompilerSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   } 
   
   public static class CxxVeraxxSensorImpl extends CxxVeraxxSensor {
     public CxxVeraxxSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   }  
 
   public static class CxxValgrindSensorImpl extends CxxValgrindSensor {
     public CxxValgrindSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   }
             
   public static class CxxClangTidySensorImpl extends CxxClangTidySensor {
     public CxxClangTidySensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   }  
+
+  public static class CxxClangSASensorImpl extends CxxClangSASensor {
+    public CxxClangSASensorImpl(Settings settings) {
+      super(new CLanguage(settings), settings);
+    }
+  }
   public static class CxxExternalRulesSensorImpl extends CxxOtherSensor {
     public CxxExternalRulesSensorImpl(Settings settings) {
-      super(new CLanguage(settings));      
+      super(new CLanguage(settings), settings);      
     }
   } 
   public static class CxxUnitTestResultsImportSensorImpl extends CxxUnitTestResultsImportSensor {
