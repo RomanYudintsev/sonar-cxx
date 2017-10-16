@@ -1,18 +1,20 @@
 language: java
 
-dist: precise
+dist: trusty
+sudo: required
 
 jdk:
         - oraclejdk8
 
 env:
-        - SONARHOME=/tmp/sonarqube-5.6.6 SONARAPI=SqApi56
+        - SONARHOME=/tmp/sonarqube-5.6.7 SONARAPI=SqApi56
         - SONARHOME=/tmp/sonarqube-6.0   SONARAPI=SqApi56
         - SONARHOME=/tmp/sonarqube-6.1   SONARAPI=SqApi56
         - SONARHOME=/tmp/sonarqube-6.2   SONARAPI=SqApi62
         - SONARHOME=/tmp/sonarqube-6.3.1 SONARAPI=SqApi62
         - SONARHOME=/tmp/sonarqube-6.4   SONARAPI=SqApi62
         - SONARHOME=/tmp/sonarqube-6.5   SONARAPI=SqApi62
+        - SONARHOME=/tmp/sonarqube-6.6-RC1 SONARAPI=SqApi62
 
 matrix:
     fast_finish: true
@@ -36,14 +38,15 @@ cache:
 
 before_install:
         - cat /etc/hosts # optionally check the content
-        - travis_retry sudo apt-add-repository -y ppa:boost-latest/ppa
-        - travis_retry sudo apt-get -qq update
-        - travis_retry sudo apt-get -qq install boost1.55
+        # Boost 1.55 is pre-installed on Ubuntu Trusty
+        #- travis_retry sudo apt-add-repository -y ppa:boost-latest/ppa
+        #- travis_retry sudo apt-get -qq update
+        #- travis_retry sudo apt-get -qq install boost1.55
 
 install:
         - cd /tmp
-        - travis_retry wget -q https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-5.6.6.zip
-        - unzip -qq sonarqube-5.6.6.zip
+        - travis_retry wget -q https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-5.6.7.zip
+        - unzip -qq sonarqube-5.6.7.zip
         - travis_retry wget -q https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-6.0.zip
         - unzip -qq sonarqube-6.0.zip
         - travis_retry wget -q https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-6.1.zip
@@ -56,6 +59,8 @@ install:
         - unzip -qq sonarqube-6.4.zip
         - travis_retry wget -q https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-6.5.zip
         - unzip -qq sonarqube-6.5.zip
+        - travis_retry wget -q https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-6.6-RC1.zip
+        - unzip -qq sonarqube-6.6-RC1.zip
         - travis_retry wget -q https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778.zip
         - unzip -qq sonar-scanner-cli-3.0.3.778.zip
         - cd -
