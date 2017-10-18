@@ -87,18 +87,31 @@ public class CppLanguage extends CxxLanguage {
   private final String[] sourceSuffixes;
   private final String[] headerSuffixes;
   private final String[] fileSuffixes;
+
+  private static CxxLanguage _inst;
   
   /**
    * @param settings
    */
   public CppLanguage(Settings settings) {
     super("c++", "c++", settings);
-    
-    sourceSuffixes = createStringArray(settings.getStringArray(CxxPlugin.SOURCE_FILE_SUFFIXES_KEY), 
-                                                                         DEFAULT_SOURCE_SUFFIXES);
-    headerSuffixes = createStringArray(settings.getStringArray(CxxPlugin.HEADER_FILE_SUFFIXES_KEY), 
-                                                                         DEFAULT_HEADER_SUFFIXES);
-    fileSuffixes = mergeArrays(sourceSuffixes, headerSuffixes);    
+
+    sourceSuffixes = createStringArray(settings.getStringArray(CxxPlugin.SOURCE_FILE_SUFFIXES_KEY),
+            DEFAULT_SOURCE_SUFFIXES);
+    headerSuffixes = createStringArray(settings.getStringArray(CxxPlugin.HEADER_FILE_SUFFIXES_KEY),
+            DEFAULT_HEADER_SUFFIXES);
+    fileSuffixes = mergeArrays(sourceSuffixes, headerSuffixes);
+  }
+
+  @Override
+  public void bindInst() {
+    _inst = this;
+  }
+
+  @Override
+  public CxxLanguage inst()
+  {
+    return _inst;
   }
   
   @Override

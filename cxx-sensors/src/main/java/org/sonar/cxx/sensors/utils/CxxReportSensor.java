@@ -43,6 +43,8 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.CxxLanguage;
+import org.sonar.cxx.sensors.compiler.CxxCompilerGccRuleRepository;
+import org.sonar.cxx.sensors.compiler.CxxCompilerGccSensor;
 
 /**
  * This class is used as base for all sensors which import reports. It hosts
@@ -52,6 +54,7 @@ public abstract class CxxReportSensor implements Sensor {
   private static final Logger LOG = Loggers.get(CxxReportSensor.class);
   private final Set<String> notFoundFiles = new HashSet<>();
   private final Set<String> uniqueIssues = new HashSet<>();
+  private final Set<String> uniqueMeasures = new HashSet<>();
   private final Map<InputFile, Integer> violationsPerFileCount = new HashMap<>();
   private int violationsPerModuleCount;
   protected final Settings settings;
@@ -246,16 +249,83 @@ public abstract class CxxReportSensor implements Sensor {
   /**
    * Saves code violation only if unique. Compares file, line, ruleId and msg.
      * @param sensorContext
-     * @param ruleRepoKey
      * @param file
-     * @param line
-     * @param ruleId
-     * @param msg
+     * @param metric
+   */
+  public boolean saveUniqueMeasure(SensorContext sensorContext, @Nullable String file,
+                                   @Nullable Metric<Integer> metric, Integer measureCount) {
+    // StringBuilder is slower
+    boolean added = false;
+    if (metric!= null && uniqueMeasures.add(file+metric.getKey())) {
+      added = saveMeasure(sensorContext, file, metric, measureCount);
+    }
+    return added;
+  }
+  /**
+   * Saves a code violation which is detected in the given file/line and has
+   * given ruleId and message. Saves it to the given project and context.
+   * Project or file-level violations can be saved by passing null for the
+   * according parameters ('file' = null for project level, 'line' = null for
+   * file-level)
+   */
+  private boolean saveMeasure(SensorContext sensorContext, @Nullable String filename,
+                           Metric<Integer> metric, Integer measureCount) {
+    boolean added = false;
+    if ((filename != null) && (!filename.isEmpty())) {
+      String root = sensorContext.fileSystem().baseDir().getAbsolutePath();
+      String normalPath = CxxUtils.normalizePathFull(filename, root);
+      if (normalPath != null && !notFoundFiles.contains(normalPath)) {
+        InputFile inputFile = sensorContext.fileSystem().inputFile(sensorContext.fileSystem()
+                .predicates().hasAbsolutePath(normalPath));
+        if (inputFile != null) {
+            try {
+              sensorContext.<Integer>newMeasure()
+                      .forMetric(metric)
+                      .on(inputFile)
+                      .withValue(measureCount)
+                      .save();
+              added = true;
+            } catch (Exception ex) {
+              LOG.error("Cannot save measure : '{}', ignoring measure", metric.getKey());
+              LOG.error("error :: {}", ex);
+              CxxUtils.validateRecovery(ex, this.language);
+            }
+        } else {
+          LOG.warn("Cannot find the file '{}', skipping measure", normalPath);
+          notFoundFiles.add(normalPath);
+        }
+      }
+    } else {
+      try {
+        sensorContext.<Integer>newMeasure()
+                .forMetric(metric)
+                .on(sensorContext.module())
+                .withValue(measureCount)
+                .save();
+        added = true;
+      } catch (Exception ex) {
+        LOG.error("Cannot save measure : '{}', ignoring measure", metric.getKey());
+        LOG.error("error :: {}", ex);
+        CxxUtils.validateRecovery(ex, this.language);
+      }
+    }
+    return added;
+  }
+
+
+  /**
+   * Saves code violation only if unique. Compares file, line, ruleId and msg.
+   * @param sensorContext
+   * @param ruleRepoKey
+   * @param file
+   * @param line
+   * @param ruleId
+   * @param msg
    */
   public void saveUniqueViolation(SensorContext sensorContext, String ruleRepoKey,
                                   @Nullable String file, @Nullable String line, String ruleId, String msg) {
     // StringBuilder is slower
-    if (uniqueIssues.add(file + line + ruleId + msg)) { 
+    if (uniqueIssues.add(file + line + ruleId + msg)) {
       saveViolation(sensorContext, ruleRepoKey, file, line, ruleId, msg);
     }
   }

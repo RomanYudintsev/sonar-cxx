@@ -48,6 +48,10 @@ public abstract class CxxLanguage extends AbstractLanguage {
     this.MetricsCache = new HashMap<>();
   }
 
+  public abstract void bindInst();
+
+  public abstract CxxLanguage inst();
+
   @Override
   public int hashCode() {
     return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers

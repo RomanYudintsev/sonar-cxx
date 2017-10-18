@@ -96,6 +96,18 @@ public class CLanguage extends CxxLanguage {
     headerSuffixes = createStringArray(settings.getStringArray(CPlugin.HEADER_FILE_SUFFIXES_KEY), DEFAULT_HEADER_SUFFIXES);
     fileSuffixes = mergeArrays(sourceSuffixes, headerSuffixes);    
   }
+
+  private static CxxLanguage _inst;
+  @Override
+  public void bindInst() {
+    _inst = this;
+  }
+
+  @Override
+  public CxxLanguage inst()
+  {
+    return _inst;
+  }
   
   @Override
   public int hashCode() {

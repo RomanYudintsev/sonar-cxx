@@ -38,11 +38,7 @@ import org.sonar.cxx.sensors.clangtidy.CxxClangTidyRuleRepository;
 import org.sonar.cxx.sensors.clangtidy.CxxClangTidySensor;
 import org.sonar.cxx.sensors.clangsa.CxxClangSARuleRepository;
 import org.sonar.cxx.sensors.clangsa.CxxClangSASensor;
-import org.sonar.cxx.sensors.compiler.CxxCompilerGccParser;
-import org.sonar.cxx.sensors.compiler.CxxCompilerGccRuleRepository;
-import org.sonar.cxx.sensors.compiler.CxxCompilerSensor;
-import org.sonar.cxx.sensors.compiler.CxxCompilerVcParser;
-import org.sonar.cxx.sensors.compiler.CxxCompilerVcRuleRepository;
+import org.sonar.cxx.sensors.compiler.*;
 import org.sonar.cxx.sensors.coverage.CxxCoverageCache;
 import org.sonar.cxx.sensors.coverage.CxxCoverageSensor;
 import org.sonar.cxx.sensors.cppcheck.CxxCppCheckRuleRepository;
@@ -86,7 +82,6 @@ public final class CPlugin implements Plugin {
   public static final String CPD_IGNORE_LITERALS_KEY = LANG_PROP_PREFIX + "cpd.ignoreLiterals";
   public static final String CPD_IGNORE_IDENTIFIERS_KEY = LANG_PROP_PREFIX + "cpd.ignoreIdentifiers";
 
-      
   private static List<PropertyDefinition> generalProperties() {
     String subcateg = "(1) General";
     return new ArrayList<>(Arrays.asList(
@@ -220,42 +215,42 @@ public final class CPlugin implements Plugin {
       .description("Path to <a href='http://www.gimpel.com/html/pcl.htm'>PC-lint</a> reports(s), relative to projects root." + USE_ANT_STYLE_WILDCARDS)
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(5)
+      .index(6)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxPCLintRuleRepository.CUSTOM_RULES_KEY)
       .name("PC-lint custom rules")
       .description("XML definitions of custom PC-lint rules, which are'nt builtin into the plugin." + EXTENDING_THE_CODE_ANALYSIS)
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(6)
+      .index(7)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxRatsSensor.REPORT_PATH_KEY)
       .name("RATS report(s)")
       .description("Path to <a href='https://code.google.com/p/rough-auditing-tool-for-security/'>RATS<a/> reports(s), relative to projects root." + USE_ANT_STYLE_WILDCARDS)
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(7)
+      .index(8)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxRatsRuleRepository.CUSTOM_RULES_KEY)
       .name("RATS custom rules")
       .description("XML definitions of custom RATS rules, which are'nt builtin into the plugin." + EXTENDING_THE_CODE_ANALYSIS)
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(8)
+      .index(9)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxVeraxxSensor.REPORT_PATH_KEY)
       .name("Vera++ report(s)")
       .description("Path to <a href='https://bitbucket.org/verateam'>Vera++</a> reports(s), relative to projects root." + USE_ANT_STYLE_WILDCARDS)
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(9)
+      .index(10)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxVeraxxRuleRepository.CUSTOM_RULES_KEY)
       .name("Vera++ custom rules")
       .description("XML definitions of custom Vera++ rules, which are'nt builtin into the plugin." + EXTENDING_THE_CODE_ANALYSIS)
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(10)
+      .index(11)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxOtherSensor.REPORT_PATH_KEY)
       .name("External checkers report(s)")
@@ -263,7 +258,7 @@ public final class CPlugin implements Plugin {
         + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Extending-the-code-analysis'>here</a> for details.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(11)
+      .index(12)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxOtherRepository.RULES_KEY)
       .name("External rules")
@@ -272,7 +267,7 @@ public final class CPlugin implements Plugin {
       .type(PropertyType.TEXT)
       .multiValues(true)
       .subCategory(subcateg)
-      .index(12)
+      .index(13)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxClangTidySensor.REPORT_PATH_KEY)
       .name("Clang-Tidy analyzer report(s)")
@@ -280,7 +275,7 @@ public final class CPlugin implements Plugin {
         + " If neccessary, <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> are at your service.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(13)
+      .index(14)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxClangTidySensor.REPORT_CHARSET_DEF)
       .defaultValue(CxxClangTidySensor.DEFAULT_CHARSET_DEF)
@@ -288,14 +283,14 @@ public final class CPlugin implements Plugin {
       .description("The encoding to use when reading the clang-tidy report. Leave empty to use parser's default UTF-8.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(14)
+      .index(15)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxClangTidyRuleRepository.CUSTOM_RULES_KEY)
       .name("Clang-Tidy custom rules")
       .description("XML definitions of custom Clang-Tidy rules, which aren't builtin into the plugin." + EXTENDING_THE_CODE_ANALYSIS)
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(15)
+      .index(16)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxClangSASensor.REPORT_PATH_KEY)
       .name("Clang Static analyzer analyzer report(s)")
@@ -303,14 +298,14 @@ public final class CPlugin implements Plugin {
         + " If neccessary, <a href='https://ant.apache.org/manual/dirtasks.html'>Ant-style wildcards</a> are at your service.")
       .subCategory(subcateg)
       .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(16)
+      .index(17)
       .build(),
       PropertyDefinition.builder(LANG_PROP_PREFIX + CxxClangSARuleRepository.CUSTOM_RULES_KEY)
       .name("Clang-SA custom rules")
       .description("NO DESC")
       .type(PropertyType.TEXT)
       .subCategory(subcateg)
-      .index(17)
+      .index(18)
       .build()
     ));
   }
@@ -318,53 +313,145 @@ public final class CPlugin implements Plugin {
   private static List<PropertyDefinition> compilerWarningsProperties() {
     String subcateg = "(4) Compiler warnings";
     return new ArrayList<>(Arrays.asList(
-      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.REPORT_PATH_KEY)
-      .name("Compiler report(s)")
-      .description("Path to compilers output (i.e. file(s) containg compiler warnings), relative to projects root." + USE_ANT_STYLE_WILDCARDS)
-      .subCategory(subcateg)
-      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(1)
-      .build(),
-      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.PARSER_KEY_DEF)
-      .defaultValue(CxxCompilerSensor.DEFAULT_PARSER_DEF)
-      .name("Format")
-      .type(PropertyType.SINGLE_SELECT_LIST)
-      .options(LANG_PROP_PREFIX + CxxCompilerVcParser.COMPILER_KEY, LANG_PROP_PREFIX + CxxCompilerGccParser.COMPILER_KEY)
-      .description("The format of the warnings file. Currently supported are Visual C++ and GCC.")
-      .subCategory(subcateg)
-      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(2)
-      .build(),
-      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.REPORT_CHARSET_DEF)
-      .defaultValue(CxxCompilerSensor.DEFAULT_CHARSET_DEF)
-      .name("Encoding")
-      .description("The encoding to use when reading the compiler report. Leave empty to use parser's default UTF-8.")
-      .subCategory(subcateg)
-      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(3)
-      .build(),
-      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.REPORT_REGEX_DEF)
-      .name("Custom matcher")
-      .description("Regular expression to identify the four groups of the compiler warning message: file, line, ID, message. For advanced usages. Leave empty to use parser's default."
-        + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>this page</a> for details regarding the different regular expression that can be use per compiler.")
-      .subCategory(subcateg)
-      .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
-      .index(4)
-      .build(),
-      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerVcRuleRepository.CUSTOM_RULES_KEY)
-      .name("Custom rules for Visual C++ warnings")
-      .description("XML definitions of custom rules for Visual C++ warnings, which are'nt builtin into the plugin." + EXTENDING_THE_CODE_ANALYSIS)
-      .type(PropertyType.TEXT)
-      .subCategory(subcateg)
-      .index(5)
-      .build(),
-      PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerGccRuleRepository.CUSTOM_RULES_KEY)
-      .name("Custom rules for GCC warnings")
-      .description("XML definitions of custom rules for GCC's warnings, which are'nt builtin into the plugin." + EXTENDING_THE_CODE_ANALYSIS)
-      .type(PropertyType.TEXT)
-      .subCategory(subcateg)
-      .index(6)
-      .build()
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.REPORT_PATH_KEY)
+    .name("Compiler report(s)")
+    .description("Deprecated. use compiler.[clang|gcc|vc].* property. Path to compilers output (i.e. file(s) containg compiler warnings), relative to projects root."
+            + USE_ANT_STYLE_WILDCARDS)
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(1)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.PARSER_KEY_DEF)
+    .defaultValue(CxxCompilerSensor.DEFAULT_PARSER_DEF)
+    .name("Format")
+    .type(PropertyType.SINGLE_SELECT_LIST)
+    .options(LANG_PROP_PREFIX + CxxCompilerVcParser.COMPILER_KEY, LANG_PROP_PREFIX
+            + CxxCompilerGccParser.COMPILER_KEY)
+    .description("Deprecated. use compiler.[clang|gcc|vc].* property. The format of the warnings file. Currently supported are Visual C++ and GCC.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(2)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.REPORT_CHARSET_DEF)
+    .defaultValue(CxxCompilerSensor.DEFAULT_CHARSET_DEF)
+    .name("Encoding")
+    .description("Deprecated. use compiler.[clang|gcc|vc].* property. The encoding to use when reading the compiler report. Leave empty to use parser's default UTF-8.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(3)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerSensor.REPORT_REGEX_DEF)
+    .name("Custom matcher")
+    .description("Deprecated. use compiler.[clang|gcc|vc].* property. Regular expression to identify the four groups of the compiler warning message: file, line, ID,"
+            + " message. For advanced usages. Leave empty to use parser's default."
+            + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>"
+            + "this page</a> for details regarding the different regular expression that can be use per compiler.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(4)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerClangSensor.REPORT_PATH_KEY)
+    .name("Compiler Clang report(s)")
+    .description("Path to clang output (i.e. file(s) containg compiler warnings), relative to projects root."
+            + USE_ANT_STYLE_WILDCARDS)
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(5)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerClangSensor.REPORT_CHARSET_DEF)
+    .defaultValue(CxxCompilerClangSensor.DEFAULT_CHARSET_DEF)
+    .name("Encoding")
+    .description("The encoding to use when reading the compiler report. Leave empty to use parser's default UTF-8.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(6)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerClangSensor.REPORT_REGEX_DEF)
+    .name("Custom matcher")
+    .description("Regular expression to identify the four groups of the compiler warning message: file, line, ID,"
+            + " message. For advanced usages. Leave empty to use parser's default."
+            + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>"
+            + "this page</a> for details regarding the different regular expression that can be use per compiler.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(7)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerGccSensor.REPORT_PATH_KEY)
+    .name("Compiler Gcc report(s)")
+    .description("Path to gcc output (i.e. file(s) containg compiler warnings), relative to projects root."
+            + USE_ANT_STYLE_WILDCARDS)
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(8)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerGccSensor.REPORT_CHARSET_DEF)
+    .defaultValue(CxxCompilerGccSensor.DEFAULT_CHARSET_DEF)
+    .name("Encoding")
+    .description("The encoding to use when reading the compiler report. Leave empty to use parser's default UTF-8.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(9)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerGccSensor.REPORT_REGEX_DEF)
+    .name("Custom matcher")
+    .description("Regular expression to identify the four groups of the compiler warning message: file, line, ID,"
+            + " message. For advanced usages. Leave empty to use parser's default."
+            + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>"
+            + "this page</a> for details regarding the different regular expression that can be use per compiler.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(10)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerVcSensor.REPORT_PATH_KEY)
+    .name("Compiler Vc report(s)")
+    .description("Path to Vc output (i.e. file(s) containg compiler warnings), relative to projects root."
+            + USE_ANT_STYLE_WILDCARDS)
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(11)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerVcSensor.REPORT_CHARSET_DEF)
+    .defaultValue(CxxCompilerVcSensor.DEFAULT_CHARSET_DEF)
+    .name("Encoding")
+    .description("The encoding to use when reading the compiler report. Leave empty to use parser's default UTF-8.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(12)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerVcSensor.REPORT_REGEX_DEF)
+    .name("Custom matcher")
+    .description("Regular expression to identify the four groups of the compiler warning message: file, line, ID,"
+            + " message. For advanced usages. Leave empty to use parser's default."
+            + " See <a href='https://github.com/SonarOpenCommunity/sonar-cxx/wiki/Compilers'>"
+            + "this page</a> for details regarding the different regular expression that can be use per compiler.")
+    .subCategory(subcateg)
+    .onQualifiers(Qualifiers.PROJECT, Qualifiers.MODULE)
+    .index(13)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerClangRuleRepository.CUSTOM_RULES_KEY)
+    .name("Custom rules for Clang warnings")
+    .description("XML definitions of custom rules for Clang's warnings, which are'nt builtin into the plugin."
+            + EXTENDING_THE_CODE_ANALYSIS)
+    .type(PropertyType.TEXT)
+    .subCategory(subcateg)
+    .index(14)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerVcRuleRepository.CUSTOM_RULES_KEY)
+    .name("Custom rules for Visual C++ warnings")
+    .description("XML definitions of custom rules for Visual C++ warnings, which are'nt builtin into the plugin."
+            + EXTENDING_THE_CODE_ANALYSIS)
+    .type(PropertyType.TEXT)
+    .subCategory(subcateg)
+    .index(15)
+    .build(),
+    PropertyDefinition.builder(LANG_PROP_PREFIX + CxxCompilerGccRuleRepository.CUSTOM_RULES_KEY)
+    .name("Custom rules for GCC warnings")
+    .description("XML definitions of custom rules for GCC's warnings, which are'nt builtin into the plugin."
+            + EXTENDING_THE_CODE_ANALYSIS)
+    .type(PropertyType.TEXT)
+    .subCategory(subcateg)
+    .index(16)
+    .build()
     ));
   }
 
@@ -503,6 +590,9 @@ public final class CPlugin implements Plugin {
     l.add(CxxPCLintSensorImpl.class);
     l.add(CxxDrMemorySensorImpl.class);
     l.add(CxxCompilerSensorImpl.class);
+    l.add(CxxCompilerClangSensorImpl.class);
+    l.add(CxxCompilerGccSensorImpl.class);
+    l.add(CxxCompilerVcSensorImpl.class);
     l.add(CxxVeraxxSensorImpl.class);
     l.add(CxxValgrindSensorImpl.class);
     l.add(CxxClangTidySensorImpl.class);
@@ -521,6 +611,7 @@ public final class CPlugin implements Plugin {
     l.add(CxxDrMemoryRuleRepositoryImpl.class);
     l.add(CxxCompilerVcRuleRepositoryImpl.class);
     l.add(CxxCompilerGccRuleRepositoryImpl.class);
+    l.add(CxxCompilerClangRuleRepositoryImpl.class);
     l.add(CxxVeraxxRuleRepositoryImpl.class);
     l.add(CxxValgrindRuleRepositoryImpl.class);   
     l.add(CxxExternalRuleRepositoryImpl.class);    
@@ -569,6 +660,12 @@ public final class CPlugin implements Plugin {
   public static class CxxCompilerGccRuleRepositoryImpl extends CxxCompilerGccRuleRepository {
     public CxxCompilerGccRuleRepositoryImpl(ServerFileSystem fileSystem, RulesDefinitionXmlLoader xmlRuleLoader, Settings settings) {
       super(fileSystem, xmlRuleLoader, new CLanguage(settings));      
+    }
+  }
+
+  public static class CxxCompilerClangRuleRepositoryImpl extends CxxCompilerClangRuleRepository {
+    public CxxCompilerClangRuleRepositoryImpl(ServerFileSystem fileSystem, RulesDefinitionXmlLoader xmlRuleLoader, Settings settings) {
+      super(fileSystem, xmlRuleLoader, new CLanguage(settings));
     }
   }
   
@@ -645,13 +742,30 @@ public final class CPlugin implements Plugin {
     public CxxDrMemorySensorImpl(Settings settings) {
       super(new CLanguage(settings), settings);      
     }
-  } 
-  
+  }
+
+  @Deprecated
   public static class CxxCompilerSensorImpl extends CxxCompilerSensor {
     public CxxCompilerSensorImpl(Settings settings) {
       super(new CLanguage(settings), settings);      
     }
-  } 
+  }
+
+  public static class CxxCompilerClangSensorImpl extends CxxCompilerClangSensor {
+    public CxxCompilerClangSensorImpl(Settings settings) {
+      super(new CLanguage(settings), settings);
+    }
+  }
+  public static class CxxCompilerGccSensorImpl extends CxxCompilerGccSensor {
+    public CxxCompilerGccSensorImpl(Settings settings) {
+      super(new CLanguage(settings), settings);
+    }
+  }
+  public static class CxxCompilerVcSensorImpl extends CxxCompilerVcSensor {
+    public CxxCompilerVcSensorImpl(Settings settings) {
+      super(new CLanguage(settings), settings);
+    }
+  }
   
   public static class CxxVeraxxSensorImpl extends CxxVeraxxSensor {
     public CxxVeraxxSensorImpl(Settings settings) {

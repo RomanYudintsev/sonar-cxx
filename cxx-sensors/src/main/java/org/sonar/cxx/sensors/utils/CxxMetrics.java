@@ -23,10 +23,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.measures.Metrics;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.CxxLanguage;
+import org.sonar.cxx.sensors.compiler.CxxCompilerClangSensor;
+import org.sonar.cxx.sensors.compiler.CxxCompilerGccSensor;
 import org.sonar.cxx.sensors.compiler.CxxCompilerSensor;
+import org.sonar.cxx.sensors.compiler.CxxCompilerVcSensor;
 import org.sonar.cxx.sensors.cppcheck.CxxCppCheckSensor;
 import org.sonar.cxx.sensors.drmemory.CxxDrMemorySensor;
 import org.sonar.cxx.sensors.other.CxxOtherSensor;
@@ -42,14 +48,20 @@ import org.sonar.cxx.sensors.veraxx.CxxVeraxxSensor;
 public class CxxMetrics implements Metrics {
   private final CxxLanguage language;
 
+  private static final Logger LOG = Loggers.get(CxxCompilerGccSensor.class);
+
   /**
   * CxxMetrics
   * @param language
   **/
   public CxxMetrics(CxxLanguage language) {
     this.language = language;
+    language.bindInst();
     
     this.buildMetric(CxxCompilerSensor.COMPILER_KEY, "Compiler issues", language);
+    this.buildMetric(CxxCompilerClangSensor.COMPILER_KEY, "Compiler Clang issues", language);
+    this.buildMetric(CxxCompilerGccSensor.COMPILER_KEY, "Compiler Gcc issues", language);
+    this.buildMetric(CxxCompilerVcSensor.COMPILER_KEY, "Compiler Vc issues", language);
     this.buildMetric(CxxCppCheckSensor.KEY, "CppCheck issues", language);
     this.buildMetric(CxxOtherSensor.KEY, "Other tools issues", language);
     this.buildMetric(CxxPCLintSensor.KEY, "PC-Lint issues", language);
@@ -57,7 +69,7 @@ public class CxxMetrics implements Metrics {
     this.buildMetric(CxxSquidSensor.KEY, "Squid issues", language);      
     this.buildMetric(CxxValgrindSensor.KEY, "Valgrind issues", language);    
     this.buildMetric(CxxVeraxxSensor.KEY, "Vera issues", language);    
-    this.buildMetric(CxxDrMemorySensor.KEY, "DrMemory issues", language);  
+    this.buildMetric(CxxDrMemorySensor.KEY, "DrMemory issues", language);
   }
 
   /**
@@ -80,6 +92,7 @@ public class CxxMetrics implements Metrics {
   private void buildMetric(String key, String description, CxxLanguage language) {
     String effectiveKey = CxxMetrics.getKey(key, language);
     Metric<?> metric = new Metric.Builder(effectiveKey, description, Metric.ValueType.INT)
+    .setDescription(description)
     .setDirection(Metric.DIRECTION_WORST)
     .setQualitative(Boolean.TRUE)
     .setDomain(language.getKey().toUpperCase(Locale.ENGLISH))

@@ -37,6 +37,9 @@ import org.sonar.api.measures.CoreMetrics;
 import org.sonar.cxx.CxxAstScanner;
 import org.sonar.cxx.CxxConfiguration;
 import org.sonar.cxx.api.CxxMetric;
+import org.sonar.cxx.sensors.compiler.CxxCompilerClangSensor;
+import org.sonar.cxx.sensors.compiler.CxxCompilerGccSensor;
+import org.sonar.cxx.sensors.compiler.CxxCompilerVcSensor;
 import org.sonar.squidbridge.AstScanner;
 import org.sonar.squidbridge.SquidAstVisitor;
 import org.sonar.squidbridge.api.CheckMessage;
@@ -213,6 +216,31 @@ public class CxxSquidSensor implements Sensor {
       cxxConf.setCompilationPropertiesWithBuildLog(reports,
         this.language.getStringOption(CxxCompilerSensor.PARSER_KEY_DEF),
         this.language.getStringOption(CxxCompilerSensor.REPORT_CHARSET_DEF));
+    }
+
+    // for clang warnings report
+    String fileClangPaths = this.language.getStringOption(CxxCompilerClangSensor.REPORT_PATH_KEY);
+    if (fileClangPaths != null && !"".equals(fileClangPaths)) {
+      List<File> reports = CxxCompilerClangSensor.getReports(context.settings(), fs.baseDir(), this.language.getPluginProperty(CxxCompilerClangSensor.REPORT_PATH_KEY));
+      cxxConf.setCompilationPropertiesWithBuildLog(reports,
+              this.language.getStringOption(CxxCompilerClangSensor.PARSER_KEY_DEF),
+              this.language.getStringOption(CxxCompilerClangSensor.REPORT_CHARSET_DEF));
+    }
+    // for clang gcc report
+    String fileGccPaths = this.language.getStringOption(CxxCompilerGccSensor.REPORT_PATH_KEY);
+    if (fileGccPaths != null && !"".equals(fileGccPaths)) {
+      List<File> reports = CxxCompilerGccSensor.getReports(context.settings(), fs.baseDir(), this.language.getPluginProperty(CxxCompilerGccSensor.REPORT_PATH_KEY));
+      cxxConf.setCompilationPropertiesWithBuildLog(reports,
+              this.language.getStringOption(CxxCompilerGccSensor.PARSER_KEY_DEF),
+              this.language.getStringOption(CxxCompilerGccSensor.REPORT_CHARSET_DEF));
+    }
+    // for clang vc report
+    String fileVcPaths = this.language.getStringOption(CxxCompilerVcSensor.REPORT_PATH_KEY);
+    if (fileVcPaths != null && !"".equals(fileVcPaths)) {
+      List<File> reports = CxxCompilerVcSensor.getReports(context.settings(), fs.baseDir(), this.language.getPluginProperty(CxxCompilerVcSensor.REPORT_PATH_KEY));
+      cxxConf.setCompilationPropertiesWithBuildLog(reports,
+              this.language.getStringOption(CxxCompilerVcSensor.PARSER_KEY_DEF),
+              this.language.getStringOption(CxxCompilerVcSensor.REPORT_CHARSET_DEF));
     }
 
     return cxxConf;

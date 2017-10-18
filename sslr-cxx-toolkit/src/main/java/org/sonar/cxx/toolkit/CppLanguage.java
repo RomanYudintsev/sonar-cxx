@@ -29,11 +29,22 @@ import org.sonar.cxx.CxxLanguage;
  * @author jocs
  */
 public class CppLanguage extends CxxLanguage {
+  private static CxxLanguage _inst;
 
   public CppLanguage() {
     super("c++", new Settings());
-  }  
-  
+  }
+  @Override
+  public void bindInst() {
+    _inst = this;
+  }
+
+  @Override
+  public CxxLanguage inst()
+  {
+    return _inst;
+  }
+
   @Override
   public String[] getFileSuffixes() {
     return new String [] {"cpp", "hpp", "h", "hxx", "cxx"};

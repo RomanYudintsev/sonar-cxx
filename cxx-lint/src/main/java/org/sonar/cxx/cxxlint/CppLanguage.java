@@ -30,6 +30,18 @@ import org.sonar.cxx.CxxLanguage;
  */
 public class CppLanguage extends CxxLanguage {
 
+  private static CxxLanguage _inst;
+  @Override
+  public void bindInst() {
+    _inst = this;
+  }
+
+  @Override
+  public CxxLanguage inst()
+  {
+    return _inst;
+  }
+
   public CppLanguage() {
     super("c++", new Settings());
   }  
