@@ -47,7 +47,7 @@ public class CxxCompilerGccSensor extends CxxReportSensor {
   public static final String REPORT_CHARSET_DEF = "compiler.gcc.charset";
   public static final String PARSER_KEY_DEF = "compiler.gcc.parser";
   public static final String DEFAULT_CHARSET_DEF = "UTF-8";
-  public static final String COMPILER_KEY = "compiler_gcc";
+  public static final String COMPILER_KEY = "Compiler.gcc";
 
   private CompilerParser parser;
 
