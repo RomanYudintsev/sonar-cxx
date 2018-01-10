@@ -25,42 +25,42 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import javax.xml.stream.XMLStreamException;
-
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.stream.StreamSource;
-
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.utils.ParsingUtils;
-import org.sonar.cxx.sensors.utils.CxxReportSensor;
-import org.sonar.cxx.sensors.utils.EmptyReportException;
-import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.CxxLanguage;
+import org.sonar.cxx.sensors.utils.CxxReportSensor;
 import org.sonar.cxx.sensors.utils.CxxUtils;
+import org.sonar.cxx.sensors.utils.EmptyReportException;
 import org.sonar.cxx.sensors.utils.StaxParser;
 
 /**
  * {@inheritDoc}
  */
 public class CxxXunitSensor extends CxxReportSensor {
+
   private static final Logger LOG = Loggers.get(CxxXunitSensor.class);
   public static final String REPORT_PATH_KEY = "xunit.reportPath";
   public static final String KEY = "Xunit";
   public static final String XSLT_URL_KEY = "xunit.xsltURL";
   private static final double PERCENT_BASE = 100d;
-     
+
   private String xsltURL;
 
   /**
    * {@inheritDoc}
    */
-  public CxxXunitSensor(CxxLanguage language, Settings settings) {
-    super(language, settings);
-    xsltURL = language.getStringOption(XSLT_URL_KEY);
+  public CxxXunitSensor(CxxLanguage language) {
+    super(language);
+    if (language.getStringOption(XSLT_URL_KEY).isPresent()) {
+      xsltURL = language.getStringOption(XSLT_URL_KEY).orElse("xunit-report.xslt");
+    }
   }
 
   @Override
@@ -72,22 +72,22 @@ public class CxxXunitSensor extends CxxReportSensor {
   public void describe(SensorDescriptor descriptor) {
     descriptor.name(language.getName() + " XunitSensor");
   }
-  
+
   /**
    * {@inheritDoc}
    */
   @Override
-  public void execute(SensorContext context) {    
-    String moduleKey = context.settings().getString("sonar.moduleKey");
+  public void execute(SensorContext context) {
+    String moduleKey = context.config().get("sonar.moduleKey").orElse(null);
     if (moduleKey != null) {
       LOG.debug("Runs unit test import sensor only at top level project skip : Module Key = '{}'", moduleKey);
-      return;        
+      return;
     }
-    
-    LOG.debug("Root module imports test metrics: Module Key = '{}'", context.module());    
-    
+
+    LOG.debug("Root module imports test metrics: Module Key = '{}'", context.module());
+
     try {
-      List<File> reports = getReports(context.settings(), context.fileSystem().baseDir(), getReportPathKey());
+      List<File> reports = getReports(context.config(), context.fileSystem().baseDir(), getReportPathKey());
       if (!reports.isEmpty()) {
         XunitReportParser parserHandler = parseReport(reports);
         List<TestCase> testcases = parserHandler.getTestCases();
@@ -116,22 +116,25 @@ public class CxxXunitSensor extends CxxReportSensor {
    * @throws TransformerException
    */
   private XunitReportParser parseReport(List<File> reports)
-      throws XMLStreamException, IOException, TransformerException {
+    throws XMLStreamException, IOException, TransformerException {
     XunitReportParser parserHandler = new XunitReportParser();
     StaxParser parser = new StaxParser(parserHandler, false);
     for (File report : reports) {
       LOG.info("Processing report '{}'", report);
       try {
         parser.parse(transformReport(report));
-      } catch (EmptyReportException e) { 
+      } catch (EmptyReportException e) {
         LOG.warn("The report '{}' seems to be empty, ignoring.", report);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("{}", e);
+        }
       }
     }
     return parserHandler;
   }
 
   private void simpleMode(final SensorContext context, List<TestCase> testcases) {
-        
+
     int testsCount = 0;
     int testsSkipped = 0;
     int testsErrors = 0;
@@ -156,72 +159,72 @@ public class CxxXunitSensor extends CxxReportSensor {
 
       try {
         context.<Integer>newMeasure()
-           .forMetric(CoreMetrics.TESTS)
-           .on(context.module())
-           .withValue(testsCount)
-           .save();
-      } catch(Exception ex) { 
-        LOG.error("Cannot save measure TESTS : '{}', ignoring measure", ex);
+          .forMetric(CoreMetrics.TESTS)
+          .on(context.module())
+          .withValue(testsCount)
+          .save();
+      } catch (Exception ex) {
+        LOG.error("Cannot save measure TESTS : '{}', ignoring measure", ex.getMessage());
         CxxUtils.validateRecovery(ex, this.language);
-      }       
+      }
 
       try {
         context.<Integer>newMeasure()
-         .forMetric(CoreMetrics.TEST_ERRORS)
-         .on(context.module())
-         .withValue(testsErrors)
-         .save();
-      } catch(Exception ex) { 
-        LOG.error("Cannot save measure TEST_ERRORS : '{}', ignoring measure", ex);
+          .forMetric(CoreMetrics.TEST_ERRORS)
+          .on(context.module())
+          .withValue(testsErrors)
+          .save();
+      } catch (Exception ex) {
+        LOG.error("Cannot save measure TEST_ERRORS : '{}', ignoring measure", ex.getMessage());
         CxxUtils.validateRecovery(ex, this.language);
-      } 
-      
+      }
+
       try {
         context.<Integer>newMeasure()
-         .forMetric(CoreMetrics.TEST_FAILURES)
-         .on(context.module())
-         .withValue(testsFailures)
-         .save();
-      } catch(Exception ex) { 
-        LOG.error("Cannot save measure TEST_FAILURES : '{}', ignoring measure", ex);
+          .forMetric(CoreMetrics.TEST_FAILURES)
+          .on(context.module())
+          .withValue(testsFailures)
+          .save();
+      } catch (Exception ex) {
+        LOG.error("Cannot save measure TEST_FAILURES : '{}', ignoring measure", ex.getMessage());
         CxxUtils.validateRecovery(ex, this.language);
-      } 
-      
+      }
+
       try {
         context.<Integer>newMeasure()
-         .forMetric(CoreMetrics.SKIPPED_TESTS)
-         .on(context.module())
-         .withValue(testsSkipped)
-         .save();
-      } catch(Exception ex) { 
-        LOG.error("Cannot save measure SKIPPED_TESTS : '{}', ignoring measure", ex);
+          .forMetric(CoreMetrics.SKIPPED_TESTS)
+          .on(context.module())
+          .withValue(testsSkipped)
+          .save();
+      } catch (Exception ex) {
+        LOG.error("Cannot save measure SKIPPED_TESTS : '{}', ignoring measure", ex.getMessage());
         CxxUtils.validateRecovery(ex, this.language);
-      } 
+      }
 
       try {
         context.<Double>newMeasure()
-         .forMetric(CoreMetrics.TEST_SUCCESS_DENSITY)
-         .on(context.module())
-         .withValue(ParsingUtils.scaleValue(successDensity))
-         .save();
-      } catch(Exception ex) { 
-        LOG.error("Cannot save measure TEST_SUCCESS_DENSITY : '{}', ignoring measure", ex);
+          .forMetric(CoreMetrics.TEST_SUCCESS_DENSITY)
+          .on(context.module())
+          .withValue(ParsingUtils.scaleValue(successDensity))
+          .save();
+      } catch (Exception ex) {
+        LOG.error("Cannot save measure TEST_SUCCESS_DENSITY : '{}', ignoring measure", ex.getMessage());
         CxxUtils.validateRecovery(ex, this.language);
-      }       
+      }
 
       try {
         context.<Long>newMeasure()
-         .forMetric(CoreMetrics.TEST_EXECUTION_TIME)
-         .on(context.module())
-         .withValue(testsTime)
-         .save();
-      } catch(Exception ex) { 
-        LOG.error("Cannot save measure TEST_EXECUTION_TIME : '{}', ignoring measure", ex);
+          .forMetric(CoreMetrics.TEST_EXECUTION_TIME)
+          .on(context.module())
+          .withValue(testsTime)
+          .save();
+      } catch (Exception ex) {
+        LOG.error("Cannot save measure TEST_EXECUTION_TIME : '{}', ignoring measure", ex.getMessage());
         CxxUtils.validateRecovery(ex, this.language);
-      }       
+      }
     } else {
       LOG.debug("The reports contain no testcases");
-    }      
+    }
   }
 
   File transformReport(File report)
@@ -244,10 +247,10 @@ public class CxxXunitSensor extends CxxReportSensor {
     }
 
     return transformed;
-  }  
-  
+  }
+
   @Override
   protected String getSensorKey() {
     return KEY;
-  }  
+  }
 }

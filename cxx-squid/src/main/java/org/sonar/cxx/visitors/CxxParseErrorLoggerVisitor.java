@@ -19,10 +19,6 @@
  */
 package org.sonar.cxx.visitors;
 
-import org.sonar.cxx.parser.CxxGrammarImpl;
-import org.sonar.squidbridge.SquidAstVisitor;
-import org.sonar.squidbridge.SquidAstVisitorContext;
-
 import com.sonar.sslr.api.AstAndTokenVisitor;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.GenericTokenType;
@@ -30,12 +26,18 @@ import com.sonar.sslr.api.Grammar;
 import com.sonar.sslr.api.Token;
 import com.sonar.sslr.api.TokenType;
 import java.util.List;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.api.CxxPunctuator;
+import org.sonar.cxx.parser.CxxGrammarImpl;
+import org.sonar.squidbridge.SquidAstVisitor;
+import org.sonar.squidbridge.SquidAstVisitorContext;
 
-public class CxxParseErrorLoggerVisitor<GRAMMAR extends Grammar> 
-		extends SquidAstVisitor<GRAMMAR> implements AstAndTokenVisitor {
+public class CxxParseErrorLoggerVisitor<GRAMMAR extends Grammar>
+  extends SquidAstVisitor<GRAMMAR> implements AstAndTokenVisitor {
 
   private final SquidAstVisitorContext<?> context;
+  private static final Logger LOG = Loggers.get(CxxParseErrorLoggerVisitor.class);
 
   public CxxParseErrorLoggerVisitor(SquidAstVisitorContext<?> context) {
     this.context = context;
@@ -63,8 +65,8 @@ public class CxxParseErrorLoggerVisitor<GRAMMAR extends Grammar>
       } else if (type.equals(CxxPunctuator.CURLBR_LEFT)) {
         // part with CURLBR_LEFT is typically an ignored declaration
         if (identifierLine != -1) {
-          CxxGrammarImpl.LOG.warn("[{}:{}]: skip declaration: {}",
-            new Object[]{context.getFile(), identifierLine, sb.toString()});
+          LOG.warn("[{}:{}]: skip declaration: {}",
+            context.getFile(), identifierLine, sb.toString());
           sb.setLength(0);
           identifierLine = -1;
         }
@@ -78,8 +80,8 @@ public class CxxParseErrorLoggerVisitor<GRAMMAR extends Grammar>
 
     if (identifierLine != -1 && sb.length() > 0) {
       // part without CURLBR_LEFT is typically a syntax error
-      CxxGrammarImpl.LOG.warn("[{}:{}]:    syntax error: {}",
-        new Object[]{context.getFile(), identifierLine, sb.toString()});
+      LOG.warn("[{}:{}]:    syntax error: {}",
+        context.getFile(), identifierLine, sb.toString());
     }
   }
 

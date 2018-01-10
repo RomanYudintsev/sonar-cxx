@@ -28,12 +28,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
 import javax.annotation.Nullable;
-
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.squidbridge.api.SquidConfiguration;
 
 public class CxxConfiguration extends SquidConfiguration {
@@ -51,32 +49,28 @@ public class CxxConfiguration extends SquidConfiguration {
   private boolean errorRecoveryEnabled = true;
   private List<String> cFilesPatterns = new ArrayList<>();
   private boolean missingIncludeWarningsEnabled = true;
-  private String jsonCompilationDatabaseFile = null;
-  private boolean scanOnlySpecifiedSources = false;
-  private CxxCompilationUnitSettings globalCompilationUnitSettings = null;
+  private String jsonCompilationDatabaseFile;
+  private boolean scanOnlySpecifiedSources;
+  private CxxCompilationUnitSettings globalCompilationUnitSettings;
   private HashMap<String, CxxCompilationUnitSettings> compilationUnitSettings = new HashMap<>();
 
   private final CxxVCppBuildLogParser cxxVCppParser;
-  private CxxLanguage language; 
 
-  public CxxConfiguration(CxxLanguage language) {
-    this.language = language;
+  public CxxConfiguration() {
     uniqueIncludes.put(OVERALLINCLUDEKEY, new ArrayList<String>());
     uniqueDefines.put(OVERALLDEFINEKEY, new HashSet<String>());
     cxxVCppParser = new CxxVCppBuildLogParser(uniqueIncludes, uniqueDefines);
   }
 
-  public CxxConfiguration(Charset encoding, CxxLanguage language) {
+  public CxxConfiguration(Charset encoding) {
     super(encoding);
-    this.language = language;
     uniqueIncludes.put(OVERALLINCLUDEKEY, new ArrayList<String>());
     uniqueDefines.put(OVERALLDEFINEKEY, new HashSet<String>());
     cxxVCppParser = new CxxVCppBuildLogParser(uniqueIncludes, uniqueDefines);
   }
 
-  public CxxConfiguration(FileSystem fs, CxxLanguage language) {
+  public CxxConfiguration(FileSystem fs) {
     super(fs.encoding());
-    this.language = language;
     uniqueIncludes.put(OVERALLINCLUDEKEY, new ArrayList<String>());
     uniqueDefines.put(OVERALLDEFINEKEY, new HashSet<String>());
     cxxVCppParser = new CxxVCppBuildLogParser(uniqueIncludes, uniqueDefines);
@@ -94,7 +88,7 @@ public class CxxConfiguration extends SquidConfiguration {
     if (defines == null) {
       return;
     }
-    
+
     Set<String> overallDefs = uniqueDefines.get(OVERALLDEFINEKEY);
     for (String define : defines) {
       if (!overallDefs.contains(define)) {
@@ -102,13 +96,13 @@ public class CxxConfiguration extends SquidConfiguration {
       }
     }
   }
-  
+
   public void addOverallDefine(String define) {
     Set<String> overallDefs = uniqueDefines.get(OVERALLDEFINEKEY);
     if (!overallDefs.contains(define)) {
       overallDefs.add(define);
     }
-  }  
+  }
 
   public List<String> getDefines() {
     Set<String> allDefines = new HashSet<>();
@@ -133,14 +127,14 @@ public class CxxConfiguration extends SquidConfiguration {
       }
     }
   }
-  
+
   public void addOverallIncludeDirectory(String includeDirectory) {
     List<String> overallIncludes = uniqueIncludes.get(OVERALLINCLUDEKEY);
     if (!overallIncludes.contains(includeDirectory)) {
       LOG.debug("setIncludeDirectories() adding dir '{}'", includeDirectory);
       overallIncludes.add(includeDirectory);
     }
-  }  
+  }
 
   public void setIncludeDirectories(@Nullable String[] includeDirectories) {
     if (includeDirectories != null) {
@@ -259,7 +253,7 @@ public class CxxConfiguration extends SquidConfiguration {
   public List<File> getCompilationUnitSourceFiles() {
     List<File> files = new ArrayList<>();
 
-    for (Iterator<String> iter = compilationUnitSettings.keySet().iterator(); iter.hasNext(); ) {
+    for (Iterator<String> iter = compilationUnitSettings.keySet().iterator(); iter.hasNext();) {
       String item = iter.next();
       files.add(new File(item));
     }
@@ -271,45 +265,37 @@ public class CxxConfiguration extends SquidConfiguration {
     String fileFormat,
     String charsetName) {
 
-    if (reports == null) {
+    if (reports == null || reports.isEmpty()) {
       return;
     }
 
     for (File buildLog : reports) {
       if (buildLog.exists()) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Parse build log  file '{}'", buildLog.getAbsolutePath());
-        }
         if ("Visual C++".equals(fileFormat)) {
           cxxVCppParser.parseVCppLog(buildLog, baseDir, charsetName);
+          LOG.info("Parse build log '" + buildLog.getAbsolutePath()
+            + "' added includes: '" + uniqueIncludes.size()
+            + "', added defines: '" + uniqueDefines.size() + "'");
           if (LOG.isDebugEnabled()) {
-            LOG.info("Parse build log '"+ buildLog.getAbsolutePath()
-                  +"' added includes: '" + uniqueIncludes.size()
-                  +"', added defines: '" + uniqueDefines.size() + "'");
-          }
-        }
-        if(LOG.isDebugEnabled()) {
-          LOG.debug("Parse build log OK");
-          for (List<String> allIncludes : uniqueIncludes.values()) {
-            if (!allIncludes.isEmpty()) {
-              LOG.debug("Includes folders ({})='{}'", allIncludes.size(), allIncludes);
+            for (List<String> allIncludes : uniqueIncludes.values()) {
+              if (!allIncludes.isEmpty()) {
+                LOG.debug("Includes folders ({})='{}'", allIncludes.size(), allIncludes);
+              }
             }
-          }
-          for (Set<String> allDefines : uniqueDefines.values()) {
-            if (!allDefines.isEmpty()) {
-              LOG.debug("Defines ({})='{}'", allDefines.size(), allDefines);
+            for (Set<String> allDefines : uniqueDefines.values()) {
+              if (!allDefines.isEmpty()) {
+                LOG.debug("Defines ({})='{}'", allDefines.size(), allDefines);
+              }
             }
           }
         }
       } else {
-        LOG.error("Compilation log not found: '{}'", buildLog.getAbsolutePath());
+        LOG.error("Compilation log file not found: '{}'", buildLog.getAbsolutePath());
       }
     }
-
   }
 
   public Charset getEncoding() {
     return super.getCharset();
   }
 }
-

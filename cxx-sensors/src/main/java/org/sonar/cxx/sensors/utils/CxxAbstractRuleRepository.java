@@ -21,7 +21,6 @@ package org.sonar.cxx.sensors.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -29,8 +28,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
-
 import org.sonar.api.platform.ServerFileSystem;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.server.rule.RulesDefinitionXmlLoader;
@@ -56,12 +55,12 @@ public abstract class CxxAbstractRuleRepository implements RulesDefinition {
    * {@inheritDoc}
    */
   public CxxAbstractRuleRepository(
-          ServerFileSystem fileSystem,
-          RulesDefinitionXmlLoader xmlRuleLoader,
-          String key,
-          String name,
-          String customKey,
-          CxxLanguage language) {
+    ServerFileSystem fileSystem,
+    RulesDefinitionXmlLoader xmlRuleLoader,
+    String key,
+    String name,
+    String customKey,
+    CxxLanguage language) {
     this.fileSystem = fileSystem;
     this.xmlRuleLoader = xmlRuleLoader;
     this.repositoryKey = key + language.getRepositorySuffix();
@@ -81,25 +80,27 @@ public abstract class CxxAbstractRuleRepository implements RulesDefinition {
       xmlLoader.load(repository, xmlStream, charset);
 
       for (File userExtensionXml : getExtensions(repositoryKey, "xml")) {
-        try (FileInputStream input = new FileInputStream(userExtensionXml)) {
+        try (InputStream input = java.nio.file.Files.newInputStream(userExtensionXml.toPath())) {
 
           BufferedReader reader = new BufferedReader(new InputStreamReader(input, charset));
           xmlRuleLoader.load(repository, reader);
-        } catch (Exception ex) { 
+        } catch (Exception ex) {
           LOG.info("Cannot Load XML '{}'", ex);
         }
       }
     }
 
-    String customRules = language.getStringOption(this.customRepositoryKey);
-    if (customRules != null && !customRules.trim().isEmpty()) {
-      xmlRuleLoader.load(repository, new StringReader(customRules));
+    if (language.getStringOption(this.customRepositoryKey).isPresent()) {
+      String customRules = language.getStringOption(this.customRepositoryKey).orElse(null);
+      if (customRules != null && !customRules.trim().isEmpty()) {
+        xmlRuleLoader.load(repository, new StringReader(customRules));
+      }
     }
 
     repository.done();
   }
 
-  public List<File> getExtensions(String dirName, String... suffixes) {
+  public List<File> getExtensions(String dirName, @Nullable String... suffixes) {
     File dir = new File(fileSystem.getHomeDir(), "extensions/rules/" + dirName);
     List<File> files = new ArrayList<>();
     if (dir.exists() && dir.isDirectory()) {

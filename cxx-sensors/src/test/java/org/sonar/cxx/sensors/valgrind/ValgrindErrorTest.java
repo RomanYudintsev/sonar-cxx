@@ -19,13 +19,10 @@
  */
 package org.sonar.cxx.sensors.valgrind;
 
-import org.sonar.cxx.sensors.valgrind.ValgrindStack;
-import org.sonar.cxx.sensors.valgrind.ValgrindError;
-import static org.junit.Assert.assertEquals;
-
 import java.util.HashMap;
 import java.util.Map;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,31 +41,31 @@ public class ValgrindErrorTest {
 
   @Test
   public void errorDoesntEqualsNull() {
-    assert (!error.equals(null));
+    assertThat(error).isNotNull();
   }
 
   @Test
   public void errorDoesntEqualsMiscObject() {
-    assert (!error.equals("string"));
+    assertThat(error).isNotEqualTo("string");
   }
 
   @Test
   public void errorEqualityIsReflexive() {
-    assert (error.equals(error));
-    assert (otherError.equals(otherError));
-    assert (equalError.equals(equalError));
+    assertThat(error).isEqualTo(error);
+    assertThat(otherError).isEqualTo(otherError);
+    assertThat(equalError).isEqualTo(equalError);
   }
 
   @Test
   public void errorEqualityWorksAsExpected() {
-    assert (error.equals(equalError));
-    assert (!error.equals(otherError));
+    assertThat(error).isEqualTo(equalError);
+    assertThat(error).isNotEqualTo(otherError);
   }
 
   @Test
   public void errorHashWorksAsExpected() {
-    assert (error.hashCode() == equalError.hashCode());
-    assert (error.hashCode() != otherError.hashCode());
+    assertThat(error.hashCode() == equalError.hashCode()).isTrue();
+    assertThat(error.hashCode() != otherError.hashCode()).isTrue();
   }
 
   @Test

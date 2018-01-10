@@ -22,8 +22,8 @@ package org.sonar.cxx.sensors.compiler;
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
-import java.util.regex.Pattern;
 import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -32,8 +32,9 @@ import org.sonar.api.utils.log.Loggers;
  * {@inheritDoc}
  */
 public class CxxCompilerGccParser implements CompilerParser {
+
   private static final Logger LOG = Loggers.get(CxxCompilerGccParser.class);
-  public static final String COMPILER_KEY = "GCC";
+  public static final String KEY = "GCC";
   // search for single line with compiler warning message - order for groups: 1 = file, 2 = line, 3 = message, 4=id
   public static final String DEFAULT_REGEX_DEF = "^(.*):([0-9]+):[0-9]+:\\x20warning:\\x20(.*)\\x20\\[(.*)\\]$";
   // ToDo: as long as java 7 API is not used the support of named groups for regular expression is not possible
@@ -46,7 +47,7 @@ public class CxxCompilerGccParser implements CompilerParser {
    */
   @Override
   public String key() {
-    return COMPILER_KEY;
+    return KEY;
   }
 
   /**
@@ -78,7 +79,7 @@ public class CxxCompilerGccParser implements CompilerParser {
    */
   @Override
   public void processReport(final SensorContext context, File report, String charset, String reportRegEx, List<Warning> warnings) throws java.io.FileNotFoundException {
-    LOG.info("Parsing '{}' format", COMPILER_KEY);
+    LOG.info("Parsing '{}' format", KEY);
 
     Scanner scanner = new Scanner(report, charset);
     Pattern p = Pattern.compile(reportRegEx, Pattern.MULTILINE);
@@ -91,9 +92,8 @@ public class CxxCompilerGccParser implements CompilerParser {
       String msg = matchres.group(3);
       String id = matchres.group(4).replaceAll("=$", "");
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Scanner-matches file='{}' line='{}' id='{}' msg={}",
-        new Object[]{filename, line, id, msg});
-        }
+        LOG.debug("Scanner-matches file='{}' line='{}' id='{}' msg={}", filename, line, id, msg);
+      }
       warnings.add(new Warning(filename, line, id, msg));
     }
     scanner.close();

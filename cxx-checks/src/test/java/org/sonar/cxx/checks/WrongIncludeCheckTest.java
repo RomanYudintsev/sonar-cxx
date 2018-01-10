@@ -29,12 +29,13 @@ import org.sonar.squidbridge.checks.CheckMessagesVerifier;
 public class WrongIncludeCheckTest {
 
   @Test
+  @SuppressWarnings("squid:S2699") // ... verify contains the assertion
   public void check() throws UnsupportedEncodingException, IOException {
     UseCorrectIncludeCheck check = new UseCorrectIncludeCheck();
-    
+
     CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/UseCorrectIncludeCheck.cc", ".");
-    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check); 
-    
+    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
+
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(2).withMessage("Do not use relative path for #include directive.")
       .next().atLine(3)

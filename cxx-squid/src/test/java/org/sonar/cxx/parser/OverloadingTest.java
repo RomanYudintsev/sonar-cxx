@@ -19,11 +19,10 @@
  */
 package org.sonar.cxx.parser;
 
+import org.junit.Test;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-import org.junit.Test;
-
-public class OverloadingTest extends ParserBaseTest {
+public class OverloadingTest extends ParserBaseTestHelper {
 
   @Test
   public void operatorFunctionId_reallife() {

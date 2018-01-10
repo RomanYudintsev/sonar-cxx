@@ -21,7 +21,6 @@ package org.sonar.cxx.sensors.utils;
 
 import com.ctc.wstx.stax.WstxInputFactory;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -55,11 +54,11 @@ public class StaxParser {
   }
 
   /**
-   * StaxParser for a given stream handler and ISO control chars set awareness to on.
-   * The ISO control chars in the XML file will be replaced by simple spaces, useful for
-   * potentially bogus XML files to parse, this has a small perfs overhead so use it only when necessary
+   * StaxParser for a given stream handler and ISO control chars set awareness to on. The ISO control chars in the XML
+   * file will be replaced by simple spaces, useful for potentially bogus XML files to parse, this has a small perfs
+   * overhead so use it only when necessary
    *
-   * @param streamHandler              the XML stream handler
+   * @param streamHandler the XML stream handler
    * @param isoControlCharsAwareParser true or false
    */
   public StaxParser(XmlStreamHandler streamHandler, boolean isoControlCharsAwareParser) {
@@ -79,19 +78,23 @@ public class StaxParser {
 
   /**
    * parse XML stream:
-   * @param xmlFile - java.io.File  = input file
+   *
+   * @param xmlFile - java.io.File = input file
+   * @exception XMLStreamException javax.xml.stream.XMLStreamException
    */
   public void parse(File xmlFile) throws XMLStreamException {
-    try (FileInputStream input = new FileInputStream(xmlFile)) {
+    try (InputStream input = java.nio.file.Files.newInputStream(xmlFile.toPath())) {
       parse(input);
     } catch (IOException e) {
       LOG.debug("Cannot access file", e);
-    } 
+    }
   }
 
   /**
    * parse XML stream:
-   * @param xmlInput - java.io.InputStream  = input file
+   *
+   * @param xmlInput - java.io.InputStream = input file
+   * @exception XMLStreamException javax.xml.stream.XMLStreamException
    */
   public void parse(InputStream xmlInput) throws XMLStreamException {
     InputStream input = isoControlCharsAwareParser ? new ISOControlCharAwareInputStream(xmlInput) : xmlInput;
@@ -100,7 +103,9 @@ public class StaxParser {
 
   /**
    * parse XML stream:
-   * @param xmlReader - java.io.Reader  = input file
+   *
+   * @param xmlReader - java.io.Reader = input file
+   * @exception XMLStreamException javax.xml.stream.XMLStreamException
    */
   public void parse(Reader xmlReader) throws XMLStreamException {
     if (isoControlCharsAwareParser) {
@@ -111,7 +116,9 @@ public class StaxParser {
 
   /**
    * parse XML stream:
-   * @param xmlUrl - java.net.URL  = input stream
+   *
+   * @param xmlUrl - java.net.URL = input stream
+   * @exception XMLStreamException javax.xml.stream.XMLStreamException
    */
   public void parse(URL xmlUrl) throws XMLStreamException {
     try {
@@ -130,16 +137,17 @@ public class StaxParser {
   }
 
   private static class UndeclaredEntitiesXMLResolver implements XMLResolver {
+
     @Override
-    public Object resolveEntity(String arg0, String arg1, String fileName, String undeclaredEntity) 
-                               throws XMLStreamException {
+    public Object resolveEntity(String arg0, String arg1, String fileName, String undeclaredEntity)
+      throws XMLStreamException {
       // avoid problems with XML docs containing undeclared entities.. 
       // return the entity under its raw form if not an unicode expression
       String undeclared = undeclaredEntity;
       if (StringUtils.startsWithIgnoreCase(undeclared, "u") && undeclared.length() == 5) {
         int unicodeCharHexValue = Integer.parseInt(undeclared.substring(1), 16);
         if (Character.isDefined(unicodeCharHexValue)) {
-          undeclared = new String(new char[] {(char) unicodeCharHexValue});
+          undeclared = new String(new char[]{(char) unicodeCharHexValue});
         }
       }
       return undeclared;
@@ -147,14 +155,15 @@ public class StaxParser {
   }
 
   /**
-   * XmlStreamHandler:
-   * Simple interface for handling XML stream to parse
+   * XmlStreamHandler: Simple interface for handling XML stream to parse
    */
   public interface XmlStreamHandler {
-    
+
     /**
      * stream:
+     *
      * @param rootCursor - org.codehaus.staxmate.i.SMHierarchicCursor
+     * @exception XMLStreamException javax.xml.stream.XMLStreamException
      */
     void stream(SMHierarchicCursor rootCursor) throws XMLStreamException;
   }

@@ -29,12 +29,13 @@ import org.sonar.squidbridge.checks.CheckMessagesVerifier;
 public class UnnamedNamespaceInHeaderCheckTest {
 
   @Test
+  @SuppressWarnings("squid:S2699") // ... verify contains the assertion
   public void check() throws UnsupportedEncodingException, IOException {
     UnnamedNamespaceInHeaderCheck check = new UnnamedNamespaceInHeaderCheck();
-    
-    CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/UnnamedNamespaceInHeader.h", ".");    
-    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check); 
-        
+
+    CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/UnnamedNamespaceInHeader.h", ".");
+    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
+
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .next().withMessage("Unnamed namespaces are not allowed in header files.");
   }

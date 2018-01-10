@@ -19,57 +19,48 @@
  */
 package org.sonar.cxx.sensors.squid;
 
+import com.sonar.sslr.api.Grammar;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
-
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
-
-import org.sonar.api.batch.sensor.Sensor;
-import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.measures.CoreMetrics;
-import org.sonar.cxx.CxxAstScanner;
-import org.sonar.cxx.CxxConfiguration;
-import org.sonar.cxx.api.CxxMetric;
-import org.sonar.squidbridge.AstScanner;
-import org.sonar.squidbridge.SquidAstVisitor;
-import org.sonar.squidbridge.api.CheckMessage;
-import org.sonar.squidbridge.api.SourceCode;
-import org.sonar.squidbridge.api.SourceFile;
-import org.sonar.squidbridge.api.SourceFunction;
-import org.sonar.squidbridge.api.SourceClass;
-import org.sonar.squidbridge.indexer.QueryByParent;
-import org.sonar.squidbridge.indexer.QueryByType;
-
-import com.sonar.sslr.api.Grammar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import org.sonar.api.batch.sensor.Sensor;
+import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.ce.measure.RangeDistributionBuilder;
+import org.sonar.api.measures.CoreMetrics;
 import org.sonar.api.measures.FileLinesContextFactory;
 import org.sonar.api.measures.Metric;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
+import org.sonar.cxx.CxxAstScanner;
+import org.sonar.cxx.CxxConfiguration;
 import org.sonar.cxx.CxxLanguage;
+import org.sonar.cxx.api.CxxMetric;
 import org.sonar.cxx.sensors.compiler.CxxCompilerSensor;
-import org.sonar.cxx.sensors.coverage.CxxCoverageCache;
-import org.sonar.cxx.sensors.coverage.CxxCoverageSensor;
 import org.sonar.cxx.sensors.utils.CxxMetrics;
 import org.sonar.cxx.sensors.utils.CxxReportSensor;
 import org.sonar.cxx.sensors.utils.JsonCompilationDatabase;
 import org.sonar.cxx.sensors.visitors.CxxCpdVisitor;
-import org.sonar.cxx.sensors.visitors.CxxHighlighterVisitor;
 import org.sonar.cxx.sensors.visitors.CxxFileLinesVisitor;
+import org.sonar.cxx.sensors.visitors.CxxHighlighterVisitor;
+import org.sonar.squidbridge.AstScanner;
+import org.sonar.squidbridge.SquidAstVisitor;
+import org.sonar.squidbridge.api.CheckMessage;
+import org.sonar.squidbridge.api.SourceCode;
+import org.sonar.squidbridge.api.SourceFile;
+import org.sonar.squidbridge.indexer.QueryByType;
 
 /**
  * {@inheritDoc}
@@ -87,49 +78,41 @@ public class CxxSquidSensor implements Sensor {
   public static final String MISSING_INCLUDE_WARN = "missingIncludeWarnings";
   public static final String JSON_COMPILATION_DATABASE_KEY = "jsonCompilationDatabase";
   public static final String SCAN_ONLY_SPECIFIED_SOURCES_KEY = "scanOnlySpecifiedSources";
-  
+
   public static final String CPD_IGNORE_LITERALS_KEY = "cpd.ignoreLiterals";
   public static final String CPD_IGNORE_IDENTIFIERS_KEY = "cpd.ignoreIdentifiers";
-  
-  private static final Number[] LIMITS_COMPLEXITY_METHODS = {1, 2, 4, 6, 8, 10, 12, 20, 30};
-  private static final Number[] LIMITS_COMPLEXITY_FILES = {0, 5, 10, 20, 30, 60, 90};
+
   public static final String KEY = "Squid";
 
   private final FileLinesContextFactory fileLinesContextFactory;
   private final CxxChecks checks;
 
-  private AstScanner<Grammar> scanner;
   private final CxxLanguage language;
-  private final CxxCoverageCache cache;
-    
+
   /**
    * {@inheritDoc}
    */
   public CxxSquidSensor(CxxLanguage language,
-          FileLinesContextFactory fileLinesContextFactory,
-          CheckFactory checkFactory,
-          @Nullable CxxCoverageCache coverageCache) {
-    this(language, fileLinesContextFactory, checkFactory, null, coverageCache);    
+    FileLinesContextFactory fileLinesContextFactory,
+    CheckFactory checkFactory) {
+    this(language, fileLinesContextFactory, checkFactory, null);
   }
-  
+
   /**
    * {@inheritDoc}
    */
   public CxxSquidSensor(CxxLanguage language,
-          FileLinesContextFactory fileLinesContextFactory,
-          CheckFactory checkFactory,
-          @Nullable CustomCxxRulesDefinition[] customRulesDefinition,
-          @Nullable CxxCoverageCache coverageCache) {
+    FileLinesContextFactory fileLinesContextFactory,
+    CheckFactory checkFactory,
+    @Nullable CustomCxxRulesDefinition[] customRulesDefinition) {
     this.checks = CxxChecks.createCxxCheck(checkFactory)
       .addChecks(language.getRepositoryKey(), language.getChecks())
       .addCustomChecks(customRulesDefinition);
     this.fileLinesContextFactory = fileLinesContextFactory;
     this.language = language;
-           
-    if (coverageCache == null) {
-      this.cache = new CxxCoverageCache();
-    } else {
-      this.cache = coverageCache;
+
+    if (this.language.getMetricsCache().isEmpty()) {
+      new CxxMetrics(this.language);
     }
   }
 
@@ -137,25 +120,26 @@ public class CxxSquidSensor implements Sensor {
   public void describe(SensorDescriptor descriptor) {
     descriptor.onlyOnLanguage(this.language.getKey()).name(language.getName() + " SquidSensor");
   }
-  
+
   /**
    * {@inheritDoc}
    */
   @Override
-  public void execute(SensorContext context) {       
+  public void execute(SensorContext context) {
     Map<InputFile, Set<Integer>> linesOfCodeByFile = new HashMap<>();
-        
+
     List<SquidAstVisitor<Grammar>> visitors = new ArrayList<>((Collection) checks.all());
     visitors.add(new CxxHighlighterVisitor(context));
     visitors.add(new CxxFileLinesVisitor(fileLinesContextFactory, context, linesOfCodeByFile));
+
     visitors.add(
-            new CxxCpdVisitor(
-                    context,
-                    this.language.getBooleanOption(CPD_IGNORE_LITERALS_KEY),
-                    this.language.getBooleanOption(CPD_IGNORE_IDENTIFIERS_KEY)));
-    
+      new CxxCpdVisitor(
+        context,
+        this.language.getBooleanOption(CPD_IGNORE_LITERALS_KEY).orElse(Boolean.FALSE),
+        this.language.getBooleanOption(CPD_IGNORE_IDENTIFIERS_KEY).orElse(Boolean.FALSE)));
+
     CxxConfiguration cxxConf = createConfiguration(context.fileSystem(), context);
-    this.scanner = CxxAstScanner.create(this.language, cxxConf, context,
+    AstScanner<Grammar> scanner = CxxAstScanner.create(this.language, cxxConf,
       visitors.toArray(new SquidAstVisitor[visitors.size()]));
 
     List<File> files;
@@ -163,56 +147,59 @@ public class CxxSquidSensor implements Sensor {
       files = cxxConf.getCompilationUnitSourceFiles();
     } else {
       Iterable<InputFile> inputFiles = context.fileSystem().inputFiles(context.fileSystem().predicates()
-              .and(context.fileSystem().predicates()
-                      .hasLanguage(this.language.getKey()), context.fileSystem().predicates()
-                              .hasType(InputFile.Type.MAIN)));
+        .and(context.fileSystem().predicates()
+          .hasLanguage(this.language.getKey()), context.fileSystem().predicates()
+          .hasType(InputFile.Type.MAIN)));
 
       files = new ArrayList<>();
-      for(InputFile file : inputFiles) {
-        files.add(file.file());
+      for (InputFile file : inputFiles) {
+        files.add(file.file()); //@todo: deprecated file.file()
       }
     }
 
     if (LOG.isDebugEnabled() && !files.isEmpty()) {
-      LOG.debug("All source files (Type.MAIN): {}" , files);
+      LOG.debug("All source files (Type.MAIN): {}", files);
     }
 
     scanner.scanFiles(files);
-
-    (new CxxCoverageSensor(this.cache, this.language, context)).execute(context, linesOfCodeByFile);
 
     Collection<SourceCode> squidSourceFiles = scanner.getIndex().search(new QueryByType(SourceFile.class));
     save(squidSourceFiles, context);
   }
 
   private CxxConfiguration createConfiguration(FileSystem fs, SensorContext context) {
-    CxxConfiguration cxxConf = new CxxConfiguration(fs, this.language);
+    CxxConfiguration cxxConf = new CxxConfiguration(fs);
     cxxConf.setBaseDir(fs.baseDir().getAbsolutePath());
     String[] lines = this.language.getStringLinesOption(DEFINES_KEY);
     cxxConf.setDefines(lines);
     cxxConf.setIncludeDirectories(this.language.getStringArrayOption(INCLUDE_DIRECTORIES_KEY));
-    cxxConf.setErrorRecoveryEnabled(this.language.getBooleanOption(ERROR_RECOVERY_KEY));
+    cxxConf.setErrorRecoveryEnabled(this.language.getBooleanOption(ERROR_RECOVERY_KEY).orElse(Boolean.FALSE));
     cxxConf.setForceIncludeFiles(this.language.getStringArrayOption(FORCE_INCLUDE_FILES_KEY));
     cxxConf.setCFilesPatterns(this.language.getStringArrayOption(C_FILES_PATTERNS_KEY));
     cxxConf.setHeaderFileSuffixes(this.language.getStringArrayOption(HEADER_FILE_SUFFIXES_KEY));
-    cxxConf.setMissingIncludeWarningsEnabled(this.language.getBooleanOption(MISSING_INCLUDE_WARN));
-    cxxConf.setJsonCompilationDatabaseFile(this.language.getStringOption(JSON_COMPILATION_DATABASE_KEY));
-    cxxConf.setScanOnlySpecifiedSources(this.language.getBooleanOption(SCAN_ONLY_SPECIFIED_SOURCES_KEY));
+    cxxConf.setMissingIncludeWarningsEnabled(this.language.getBooleanOption(MISSING_INCLUDE_WARN)
+      .orElse(Boolean.FALSE));
+    cxxConf.setJsonCompilationDatabaseFile(this.language.getStringOption(JSON_COMPILATION_DATABASE_KEY)
+      .orElse(null));
+    cxxConf.setScanOnlySpecifiedSources(this.language.getBooleanOption(SCAN_ONLY_SPECIFIED_SOURCES_KEY)
+      .orElse(Boolean.FALSE));
 
     if (cxxConf.getJsonCompilationDatabaseFile() != null) {
       try {
         new JsonCompilationDatabase(cxxConf, new File(cxxConf.getJsonCompilationDatabaseFile()));
       } catch (IOException e) {
-        LOG.debug("Cannot access Json DB File: {}", e);
+        LOG.debug("Cannot access Json DB File: {}", e.getMessage());
       }
     }
 
-    String filePaths = this.language.getStringOption(CxxCompilerSensor.REPORT_PATH_KEY);
+    String filePaths = this.language.getStringOption(CxxCompilerSensor.REPORT_PATH_KEY).orElse("");
     if (filePaths != null && !"".equals(filePaths)) {
-      List<File> reports = CxxReportSensor.getReports(context.settings(), fs.baseDir(), this.language.getPluginProperty(CxxCompilerSensor.REPORT_PATH_KEY));
+      List<File> reports = CxxReportSensor.getReports(context.config(), fs.baseDir(),
+        this.language.getPluginProperty(CxxCompilerSensor.REPORT_PATH_KEY));
       cxxConf.setCompilationPropertiesWithBuildLog(reports,
-        this.language.getStringOption(CxxCompilerSensor.PARSER_KEY_DEF),
-        this.language.getStringOption(CxxCompilerSensor.REPORT_CHARSET_DEF));
+        this.language.getStringOption(CxxCompilerSensor.PARSER_KEY_DEF).orElse(""),
+        this.language.getStringOption(CxxCompilerSensor.REPORT_CHARSET_DEF)
+          .orElse(CxxCompilerSensor.DEFAULT_CHARSET_DEF));
     }
 
     return cxxConf;
@@ -227,8 +214,6 @@ public class CxxSquidSensor implements Sensor {
       InputFile inputFile = context.fileSystem().inputFile(context.fileSystem().predicates().is(ioFile));
 
       saveMeasures(inputFile, squidFile, context);
-      saveFunctionAndClassComplexityDistribution(inputFile, squidFile, context);
-      saveFilesComplexityDistribution(inputFile, squidFile, context);
       violationsCount += saveViolations(inputFile, squidFile, context);
     }
 
@@ -240,54 +225,43 @@ public class CxxSquidSensor implements Sensor {
         .forMetric(metric)
         .on(context.module())
         .withValue(violationsCount)
-        .save();               
+        .save();
     }
   }
 
   private void saveMeasures(InputFile inputFile, SourceFile squidFile, SensorContext context) {
-    context.<Integer>newMeasure().forMetric(CoreMetrics.FILES).on(inputFile).withValue(squidFile.getInt(CxxMetric.FILES)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.NCLOC).on(inputFile).withValue(squidFile.getInt(CxxMetric.LINES_OF_CODE)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.STATEMENTS).on(inputFile).withValue(squidFile.getInt(CxxMetric.STATEMENTS)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.FUNCTIONS).on(inputFile).withValue(squidFile.getInt(CxxMetric.FUNCTIONS)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.CLASSES).on(inputFile).withValue(squidFile.getInt(CxxMetric.CLASSES)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.COMPLEXITY).on(inputFile).withValue(squidFile.getInt(CxxMetric.COMPLEXITY)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.COMMENT_LINES).on(inputFile).withValue(squidFile.getInt(CxxMetric.COMMENT_LINES)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.PUBLIC_API).on(inputFile).withValue(squidFile.getInt(CxxMetric.PUBLIC_API)).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.PUBLIC_UNDOCUMENTED_API).on(inputFile).withValue(squidFile.getInt(CxxMetric.PUBLIC_UNDOCUMENTED_API)).save();       
-  }
-  
-  private void saveFunctionAndClassComplexityDistribution(InputFile inputFile, SourceFile squidFile, SensorContext context) {
-    int complexityInFunctions = 0;
-    int complexityInClasses = 0;
+    context.<Integer>newMeasure().forMetric(CoreMetrics.FILES).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.FILES)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.NCLOC).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.LINES_OF_CODE)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.STATEMENTS).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.STATEMENTS)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.FUNCTIONS).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.FUNCTIONS)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.CLASSES).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.CLASSES)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.COMPLEXITY).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.COMPLEXITY)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.COMMENT_LINES).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.COMMENT_LINES)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.PUBLIC_API).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.PUBLIC_API)).save();
+    context.<Integer>newMeasure().forMetric(CoreMetrics.PUBLIC_UNDOCUMENTED_API).on(inputFile)
+      .withValue(squidFile.getInt(CxxMetric.PUBLIC_UNDOCUMENTED_API)).save();
 
-    RangeDistributionBuilder methodComplexityDistribution = new RangeDistributionBuilder(LIMITS_COMPLEXITY_METHODS);
-    Collection<SourceCode> squidFunctionsInFile = scanner.getIndex().search(new QueryByParent(squidFile), new QueryByType(SourceFunction.class));
-    for (SourceCode squidFunction : squidFunctionsInFile) {
-      double functionComplexity = squidFunction.getDouble(CxxMetric.COMPLEXITY);
-      complexityInFunctions += functionComplexity;
-      if (squidFunction.getKey().contains("::")) {
-        complexityInClasses += functionComplexity;
-      }
-      methodComplexityDistribution.add(functionComplexity);
+    // Configuration properties for SQ 6.2++
+    // see https://jira.sonarsource.com/browse/SONAR-8328
+    if (!language.getMetricsCache().isEmpty()) {
+      int publicApi = squidFile.getInt(CxxMetric.PUBLIC_API);
+      int publicUndocumentedApi = squidFile.getInt(CxxMetric.PUBLIC_UNDOCUMENTED_API);
+      double densityOfPublicDocumentedApi = (publicApi > publicUndocumentedApi) ? ((publicApi - publicUndocumentedApi) / (double) publicApi * 100.0) : 0.0;
+      context.<Integer>newMeasure().forMetric(language.getMetric(CxxMetrics.PUBLIC_API_KEY))
+        .on(inputFile).withValue(publicApi).save();
+      context.<Integer>newMeasure().forMetric(language.getMetric(CxxMetrics.PUBLIC_UNDOCUMENTED_API_KEY)).on(inputFile)
+        .withValue(publicUndocumentedApi).save();
+      context.<Double>newMeasure().forMetric(language.getMetric(CxxMetrics.PUBLIC_DOCUMENTED_API_DENSITY_KEY))
+        .on(inputFile).withValue(densityOfPublicDocumentedApi).save();
     }
-    
-    context.<String>newMeasure().forMetric(CoreMetrics.FUNCTION_COMPLEXITY_DISTRIBUTION).on(inputFile).withValue(methodComplexityDistribution.build()).save();
-
-    Collection<SourceCode> classes = scanner.getIndex().search(new QueryByParent(squidFile), new QueryByType(SourceClass.class));
-    for (SourceCode squidClass : classes) {
-      double classComplexity = squidClass.getDouble(CxxMetric.COMPLEXITY);
-      complexityInClasses += classComplexity;
-    }
-
-    context.<Integer>newMeasure().forMetric(CoreMetrics.COMPLEXITY_IN_CLASSES).on(inputFile).withValue(complexityInClasses).save();
-    context.<Integer>newMeasure().forMetric(CoreMetrics.COMPLEXITY_IN_FUNCTIONS).on(inputFile).withValue(complexityInFunctions).save();
-  }
-
-  private void saveFilesComplexityDistribution(InputFile inputFile, SourceFile squidFile, SensorContext context) {    
-    RangeDistributionBuilder fileComplexityDistribution = new RangeDistributionBuilder(LIMITS_COMPLEXITY_FILES);
-    double complexity = squidFile.getDouble(CxxMetric.COMPLEXITY);
-    fileComplexityDistribution.add(complexity);    
-    context.<String>newMeasure().forMetric(CoreMetrics.FILE_COMPLEXITY_DISTRIBUTION).on(inputFile).withValue(fileComplexityDistribution.build()).save();
   }
 
   private int saveViolations(InputFile inputFile, SourceFile squidFile, SensorContext sensorContext) {
@@ -301,8 +275,8 @@ public class CxxSquidSensor implements Sensor {
         }
 
         NewIssue newIssue = sensorContext
-                .newIssue()
-                .forRule(RuleKey.of(this.language.getRepositoryKey(), checks.ruleKey((SquidAstVisitor<Grammar>) message.getCheck()).rule()));
+          .newIssue()
+          .forRule(RuleKey.of(this.language.getRepositoryKey(), checks.ruleKey((SquidAstVisitor<Grammar>) message.getCheck()).rule()));
         NewIssueLocation location = newIssue.newLocation()
           .on(inputFile)
           .at(inputFile.selectLine(line))
@@ -310,9 +284,9 @@ public class CxxSquidSensor implements Sensor {
 
         newIssue.at(location);
         newIssue.save();
-        
+
         // @todo - this will add a issue regardless of the save
-        violationsCount++;     
+        violationsCount++;
       }
     }
 

@@ -19,11 +19,9 @@
  */
 package org.sonar.cxx.sensors.clangsa;
 
-import org.sonar.cxx.sensors.clangsa.CxxClangSARuleRepository;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-
 import org.junit.Test;
+import static org.mockito.Mockito.mock;
 import org.sonar.api.platform.ServerFileSystem;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.server.rule.RulesDefinitionXmlLoader;
@@ -43,6 +41,6 @@ public class CxxClangSARuleRepositoryTest {
     def.define(context);
 
     RulesDefinition.Repository repo = context.repository(CxxClangSARuleRepository.KEY);
-    assertEquals(109, repo.rules().size());
+    assertEquals(111, repo.rules().size());
   }
 }

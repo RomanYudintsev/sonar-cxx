@@ -33,10 +33,11 @@ public class UseCorrectTypeCheckTest {
   public CheckMessagesVerifierRule checkMessagesVerifier = new CheckMessagesVerifierRule();
 
   @Test
+  @SuppressWarnings("squid:S2699") // ... verify contains the assertion
   public void detected() throws UnsupportedEncodingException, IOException {
-    CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/UseCorrectTypesCheck.cc", ".");    
-    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), new UseCorrectTypeCheck()); 
-    
+    CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/UseCorrectTypesCheck.cc", ".");
+    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), new UseCorrectTypeCheck());
+
     checkMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(7).withMessage("Use the correct type instead of NULL (1 times).")
       .next().atLine(10).withMessage("Use the correct type instead of WORD (1 times).")

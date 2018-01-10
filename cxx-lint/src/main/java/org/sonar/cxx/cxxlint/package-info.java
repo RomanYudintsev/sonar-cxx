@@ -17,32 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.cxx.parser;
 
-import static org.mockito.Mockito.mock;
+/**
+ * Package with sensor to evaluate Cppcheck specific report files.
+ */
+@ParametersAreNonnullByDefault
+package org.sonar.cxx.cxxlint;
 
-import org.sonar.cxx.CxxConfiguration;
-import org.sonar.squidbridge.SquidAstVisitorContext;
-
-import com.sonar.sslr.api.Grammar;
-import com.sonar.sslr.impl.Parser;
-import org.sonar.cxx.CxxFileTesterHelper;
-import org.sonar.sslr.grammar.GrammarRuleKey;
-
-public class ParserBaseTest {
-
-  protected CxxConfiguration conf = null;
-  protected Parser<Grammar> p = null;
-  protected Grammar g = null;
-
-  public ParserBaseTest() {
-    conf = new CxxConfiguration(CxxFileTesterHelper.mockCxxLanguage());
-    conf.setErrorRecoveryEnabled(false);
-    p = CxxParser.create(mock(SquidAstVisitorContext.class), conf, CxxFileTesterHelper.mockCxxLanguage());
-    g = p.getGrammar();
-  }
-  
-  void mockRule(GrammarRuleKey key) {
-    g.rule(key).mock(); //@todo deprecated
-  }
-}
+import javax.annotation.ParametersAreNonnullByDefault;

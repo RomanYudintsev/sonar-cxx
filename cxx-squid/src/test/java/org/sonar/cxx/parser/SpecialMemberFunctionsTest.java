@@ -19,11 +19,10 @@
  */
 package org.sonar.cxx.parser;
 
+import org.junit.Test;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-import org.junit.Test;
-
-public class SpecialMemberFunctionsTest extends ParserBaseTest {
+public class SpecialMemberFunctionsTest extends ParserBaseTestHelper {
 
   @Test
   public void ctorInitializer_reallife() {

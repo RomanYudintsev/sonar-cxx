@@ -35,13 +35,14 @@ public class FileHeaderCheckTest {
   public ExpectedException thrown = ExpectedException.none();
 
   @Test
+  @SuppressWarnings("squid:S2699") // ... verify contains the assertion
   public void test() throws UnsupportedEncodingException, IOException {
     FileHeaderCheck check = new FileHeaderCheck();
     check.headerFormat = "// copyright 2005";
-    
+
     CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Class1.cc", ".");
     SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
-    
+
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .noMore();
 
@@ -55,21 +56,21 @@ public class FileHeaderCheckTest {
     check = new FileHeaderCheck();
     check.headerFormat = "// copyright 2005";
 
-    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Class2.cc", ".");    
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);    
+    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Class2.cc", ".");
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(null).withMessage("Add or update the header of this file.");
 
     check = new FileHeaderCheck();
     check.headerFormat = "// copyright 2012";
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);       
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .noMore();
 
     check = new FileHeaderCheck();
     check.headerFormat = "// copyright 2012\n// foo";
 
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);    
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .noMore();
 
@@ -104,68 +105,69 @@ public class FileHeaderCheckTest {
     check = new FileHeaderCheck();
     check.headerFormat = "/*foo http://www.example.org*/";
 
-    
-    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Class3.cc", ".");    
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);    
+    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Class3.cc", ".");
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .noMore();
   }
 
   @Test
+  @SuppressWarnings("squid:S2699") // ... verify contains the assertion
   public void regex() throws UnsupportedEncodingException, IOException {
     FileHeaderCheck check = new FileHeaderCheck();
     check.headerFormat = "// copyright \\d\\d\\d";
     check.isRegularExpression = true;
-    
-    CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex1.cc", ".");    
-    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);    
+
+    CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex1.cc", ".");
+    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages()).next().atLine(null).withMessage("Add or update the header of this file.");
     // Check that the regular expression is compiled once
     check = new FileHeaderCheck();
-    
+
     file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages()).next().atLine(null).withMessage("Add or update the header of this file.");
 
     check = new FileHeaderCheck();
     check.headerFormat = "// copyright \\d{4}\\n// mycompany";
     check.isRegularExpression = true;
-       
+
     tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex2.cc", ".");
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);     
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages()).next().atLine(null).withMessage("Add or update the header of this file.");
 
     check = new FileHeaderCheck();
     check.headerFormat = "// copyright \\d{4}\\r?\\n// mycompany";
     check.isRegularExpression = true;
-    
+
     tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex3.cc", ".");
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);  
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages()).noMore();
 
     check = new FileHeaderCheck();
     check.headerFormat = "// copyright \\d{4}\\n// mycompany";
     check.isRegularExpression = true;
-    
-    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex4.cc", ".");   
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);  
+
+    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex4.cc", ".");
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages()).next().atLine(null).withMessage("Add or update the header of this file.");
 
     check = new FileHeaderCheck();
     check.headerFormat = "^(?=.*?\\bCopyright\\b)(?=.*?\\bVendor\\b)(?=.*?\\d{4}(-\\d{4})?).*$";
     check.isRegularExpression = true;
-       
+
     tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex5.cc", ".");
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);  
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
     CheckMessagesVerifier.verify(file.getCheckMessages()).noMore();
 
     check = new FileHeaderCheck();
-    
-    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex6.cc", ".");    
-    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);  
-    CheckMessagesVerifier.verify(file.getCheckMessages()).next().atLine(null).withMessage("Add or update the header of this file.");    
+
+    tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/FileHeaderCheck/Regex6.cc", ".");
+    file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
+    CheckMessagesVerifier.verify(file.getCheckMessages()).next().atLine(null).withMessage("Add or update the header of this file.");
   }
 
   @Test
+  @SuppressWarnings("squid:S2699") // ... verify contains the assertion
   public void should_fail_with_bad_regular_expression() {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("[" + FileHeaderCheck.class.getSimpleName() + "] Unable to compile the regular expression: *");
@@ -175,6 +177,5 @@ public class FileHeaderCheckTest {
     check.isRegularExpression = true;
     check.init();
   }
-
 
 }

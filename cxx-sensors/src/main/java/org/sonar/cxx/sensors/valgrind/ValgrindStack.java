@@ -21,11 +21,8 @@ package org.sonar.cxx.sensors.valgrind;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.annotation.Nullable;
-
 import org.apache.commons.io.FilenameUtils;
-
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
@@ -78,6 +75,7 @@ class ValgrindStack {
   /**
    * Returns the last frame (counted from the bottom of the stack) of a function
    * which is in 'our' code
+   *
    * @param basedir
    * @return ValgrindFrame frame or null
    */
@@ -92,8 +90,8 @@ class ValgrindStack {
     return null;
   }
 
-  private boolean isInside(String path, String folder) {
+  private static boolean isInside(String path, String folder) {
     return (path == null || "".equals(path)) ? false : path.startsWith(folder);
   }
-  
+
 }

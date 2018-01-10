@@ -19,27 +19,24 @@
  */
 package org.sonar.cxx.preprocessor;
 
-import static org.sonar.sslr.tests.Assertions.assertThat;
-
-import org.junit.Test;
-
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.api.Grammar;
 import com.sonar.sslr.impl.Parser;
-import org.sonar.cxx.CxxFileTesterHelper;
+import org.junit.Test;
 import org.sonar.sslr.grammar.GrammarRuleKey;
+import static org.sonar.sslr.tests.Assertions.assertThat;
 
 public class CppGrammarTest {
 
   private final Parser<Grammar> p = Parser.builder(CppGrammar.create())
-    .withLexer(CppLexer.create(CxxFileTesterHelper.mockCxxLanguage()))
+    .withLexer(CppLexer.create())
     .build();
   private final Grammar g = p.getGrammar();
 
   private void mockRule(GrammarRuleKey key) {
-    g.rule(key).mock(); //@todo deprecated
+    g.rule(key).mock(); //@todo deprecated mock
   }
-  
+
   @Test
   public void preprocessorLine() {
     mockRule(CppGrammar.defineLine);
@@ -95,7 +92,7 @@ public class CppGrammarTest {
   @Test
   public void define_containing_argumentList() {
     AstNode define = p.parse("#define lala(a, b) a b");
-    assert (define.findFirstChild(CppGrammar.parameterList) != null); //@todo deprecated findFirstChild
+    org.assertj.core.api.Assertions.assertThat(define.getDescendants(CppGrammar.parameterList)).isNotNull();
   }
 
   @Test
@@ -557,7 +554,7 @@ public class CppGrammarTest {
     assertThat(p).matches("defined LALA");
     assertThat(p).matches("defined (LALA)");
     assertThat(p).matches("defined(LALA)");
-    
+
     assertThat(p).matches("defined __has_include");
     assertThat(p).matches("defined (__has_include)");
   }
@@ -589,7 +586,7 @@ public class CppGrammarTest {
     assertThat(p).matches("__has_include( <optional> )");
     assertThat(p).matches("__has_include( \"optional.hpp\" )");
   }
-  
+
   @Test
   public void functionlikeMacro_reallife() {
     p.setRootRule(g.rule(CppGrammar.functionlikeMacro));

@@ -22,19 +22,19 @@ package org.sonar.cxx.sensors.compiler;
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
-import java.util.regex.Pattern;
 import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-
 
 /**
  * {@inheritDoc}
  */
 public class CxxCompilerVcParser implements CompilerParser {
+
   private static final Logger LOG = Loggers.get(CxxCompilerVcParser.class);
-  public static final String COMPILER_KEY = "Visual C++";
+  public static final String KEY = "Visual C++";
   // search for single line with compiler warning message VS2008 - order for groups: 1 = file, 2 = line, 3 = ID, 4=message
   public static final String DEFAULT_REGEX_DEF = "^(.*)\\((\\d+)\\)\\x20:\\x20warning\\x20(C\\d+):(.*)$";
   // sample regex for VS2012/2013: "^.*>(?<filename>.*)\\((?<line>\\d+)\\):\\x20warning\\x20(?<id>C\\d+):(?<message>.*)$";
@@ -46,7 +46,7 @@ public class CxxCompilerVcParser implements CompilerParser {
    */
   @Override
   public String key() {
-    return COMPILER_KEY;
+    return KEY;
   }
 
   /**
@@ -77,8 +77,8 @@ public class CxxCompilerVcParser implements CompilerParser {
    * {@inheritDoc}
    */
   @Override
-  public void processReport(final SensorContext context, File report, String charset, 
-                            String reportRegEx, List<Warning> warnings) throws java.io.FileNotFoundException {
+  public void processReport(final SensorContext context, File report, String charset,
+    String reportRegEx, List<Warning> warnings) throws java.io.FileNotFoundException {
     LOG.info("Parsing 'Visual C++' format ({})", charset);
 
     Scanner scanner = new Scanner(report, charset);
@@ -92,22 +92,21 @@ public class CxxCompilerVcParser implements CompilerParser {
       String id = matchres.group(3);
       String msg = matchres.group(4);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Scanner-matches file='{}' line='{}' id='{}' msg={}",
-        new Object[]{filename, line, id, msg});
+        LOG.debug("Scanner-matches file='{}' line='{}' id='{}' msg={}", filename, line, id, msg);
       }
       warnings.add(new Warning(filename, line, id, msg));
     }
     scanner.close();
   }
 
-  private String removeMPPrefix(String fpath) {
+  private static String removeMPPrefix(String fpath) {
     // /MP (Build with Multiple Processes) will create a line prefix with the job number eg. '   42>'
     if (fpath.matches("^\\d+>.*$")) {
-      return fpath.substring(fpath.indexOf('>')+1, fpath.length());
+      return fpath.substring(fpath.indexOf('>') + 1, fpath.length());
     }
     return fpath;
   }
-  
+
   @Override
   public String toString() {
     return getClass().getSimpleName();

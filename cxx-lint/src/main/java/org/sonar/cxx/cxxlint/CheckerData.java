@@ -20,15 +20,48 @@
 package org.sonar.cxx.cxxlint;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
  * @author jocs
  */
 public class CheckerData {
-  public String id = "";
-  public String templateId = "";
-  public boolean enabled = true;
-  public HashMap<String, String> parameterData = new HashMap<String, String>();
-}
 
+  private String id = "";
+  private String templateId = "";
+  private boolean enabled = true;
+  private HashMap<String, String> parameterData = new HashMap<>();
+
+  public Map<String, String> getParameterData() {
+    return parameterData;
+  }
+
+  public void setParameterData(Map<String, String> parameterData) {
+    this.parameterData = (HashMap<String, String>) parameterData;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public String getTemplateId() {
+    return templateId;
+  }
+
+  public void setTemplateId(String templateId) {
+    this.templateId = templateId;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnable(boolean active) {
+    this.enabled = active;
+  }
+}

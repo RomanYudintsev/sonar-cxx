@@ -19,25 +19,24 @@
  */
 package org.sonar.cxx.channels;
 
+import com.sonar.sslr.api.Token;
+import com.sonar.sslr.impl.Lexer;
 import org.sonar.cxx.api.CxxTokenType;
 import org.sonar.sslr.channel.Channel;
 import org.sonar.sslr.channel.CodeReader;
 
-import com.sonar.sslr.api.Token;
-import com.sonar.sslr.impl.Lexer;
-
 /**
  * StringLiteralsChannel
  */
-public class StringLiteralsChannel extends Channel<Lexer> { 
+public class StringLiteralsChannel extends Channel<Lexer> {
 
   private static final char EOF = (char) -1;
 
   private final StringBuilder sb = new StringBuilder();
 
-  private int index = 0;
+  private int index;
   private char ch = ' ';
-  private boolean isRawString = false;
+  private boolean isRawString;
 
   @Override
   public boolean consume(CodeReader code, Lexer output) {
@@ -115,8 +114,8 @@ public class StringLiteralsChannel extends Channel<Lexer> {
         }
         sb.append(charAt);
         index++;
-        
-        if( sb.length() > delimiter.length() ) {
+
+        if (sb.length() > delimiter.length()) {
           break;
         }
       }

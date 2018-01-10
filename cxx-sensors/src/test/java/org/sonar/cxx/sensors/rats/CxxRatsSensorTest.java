@@ -19,18 +19,14 @@
  */
 package org.sonar.cxx.sensors.rats;
 
-import org.sonar.cxx.sensors.pclint.CxxPCLintSensor;
-import org.sonar.cxx.sensors.rats.CxxRatsSensor;
-import static org.fest.assertions.Assertions.assertThat;
-import org.sonar.api.batch.fs.internal.DefaultFileSystem;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Mockito.when;
-
-import org.sonar.api.batch.fs.internal.DefaultInputFile;
+import org.sonar.api.batch.fs.internal.DefaultFileSystem;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.internal.MapSettings;
 import org.sonar.cxx.CxxLanguage;
 import org.sonar.cxx.sensors.utils.TestUtils;
 
@@ -39,6 +35,7 @@ public class CxxRatsSensorTest {
   private CxxRatsSensor sensor;
   private DefaultFileSystem fs;
   private CxxLanguage language;
+  private MapSettings settings = new MapSettings();
 
   @Before
   public void setUp() {
@@ -51,13 +48,12 @@ public class CxxRatsSensorTest {
   public void shouldReportCorrectViolations() {
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
 
-    Settings settings = new Settings();
     settings.setProperty(language.getPluginProperty(CxxRatsSensor.REPORT_PATH_KEY), "rats-reports/rats-result-*.xml");
     context.setSettings(settings);
 
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "sources/utils/code_chunks.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n"));
-    context.fileSystem().add(new DefaultInputFile("myProjectKey", "report.c").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n"));
-    sensor = new CxxRatsSensor(language, settings);
+    context.fileSystem().add(TestInputFileBuilder.create("ProjectKey", "sources/utils/code_chunks.cpp").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n").build());
+    context.fileSystem().add(TestInputFileBuilder.create("ProjectKey", "report.c").setLanguage("cpp").initMetadata("asd\nasdas\nasda\n").build());
+    sensor = new CxxRatsSensor(language);
     sensor.execute(context);
     assertThat(context.allIssues()).hasSize(5);
   }

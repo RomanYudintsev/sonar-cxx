@@ -19,14 +19,13 @@
  */
 package org.sonar.cxx.parser;
 
-import static org.sonar.sslr.tests.Assertions.assertThat;
-
 import org.junit.Test;
+import static org.sonar.sslr.tests.Assertions.assertThat;
 
 /**
  * @author jmecosta
  */
-public class LamdaExpressionsTest extends ParserBaseTest {
+public class LamdaExpressionsTest extends ParserBaseTestHelper {
 
   @Test
   public void lambdaExpression() {

@@ -19,17 +19,13 @@
  */
 package org.sonar.cxx.sensors.tests.xunit;
 
-import org.sonar.cxx.sensors.tests.xunit.TestCase;
-import org.sonar.cxx.sensors.tests.xunit.TestFile;
-import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.internal.DefaultInputFile;
-
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 
 public class TestFileTest {
 
@@ -37,18 +33,18 @@ public class TestFileTest {
 
   @Before
   public void setUp() {
-    InputFile inputFile = new DefaultInputFile("foo", "test.cpp");
+    InputFile inputFile = TestInputFileBuilder.create("ProjectKey", "test.cpp").build();
     testFile = new TestFile(inputFile);
   }
 
   @Test
   public void newBornTestFileShouldHaveVirginStatistics() {
-    assertEquals(testFile.getTests(), 0);
-    assertEquals(testFile.getErrors(), 0);
-    assertEquals(testFile.getFailures(), 0);
-    assertEquals(testFile.getSkipped(), 0);
-    assertEquals(testFile.getTime(), 0);
-    assertEquals(testFile.getDetails(), "<tests-details></tests-details>");
+    assertEquals(0, testFile.getTests());
+    assertEquals(0, testFile.getErrors());
+    assertEquals(0, testFile.getFailures());
+    assertEquals(0, testFile.getSkipped());
+    assertEquals(0, testFile.getTime());
+    assertEquals("<tests-details></tests-details>", testFile.getDetails());
   }
 
   @Test

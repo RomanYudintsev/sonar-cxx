@@ -21,19 +21,17 @@ package org.sonar.cxx.sensors.coverage;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.sonar.api.batch.BatchSide;
+import org.sonar.api.batch.ScannerSide;
 
 /**
  *
  * @author jocs
  */
-@BatchSide
+@ScannerSide
 public class CxxCoverageCache {
 
-  private final static Map<String, Map<String, CoverageMeasures>> CACHE_UNIT = new HashMap<>();
-  private final static Map<String, Map<String, CoverageMeasures>> CACHE_IT = new HashMap<>();
-  private final static Map<String, Map<String, CoverageMeasures>> CACHE_OVERALL = new HashMap<>();
-  
+  private static final Map<String, Map<String, CoverageMeasures>> CACHE_UNIT = new HashMap<>();
+
   public CxxCoverageCache() {
   }
 
@@ -41,11 +39,4 @@ public class CxxCoverageCache {
     return CACHE_UNIT;
   }
 
-  public Map<String, Map<String, CoverageMeasures>> integrationCoverageCache() {
-    return CACHE_IT;
-  }
-
-  public Map<String, Map<String, CoverageMeasures>> overallCoverageCache() {
-    return CACHE_OVERALL;
-  }
 }

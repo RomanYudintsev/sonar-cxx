@@ -19,6 +19,8 @@
  */
 package org.sonar.cxx.sensors.utils;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -26,25 +28,24 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.CxxCompilationUnitSettings;
 import org.sonar.cxx.CxxConfiguration;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * JsonCompilationDatabase
  */
 public class JsonCompilationDatabase {
+
   private static final Logger LOG = Loggers.get(JsonCompilationDatabase.class);
 
   /**
    * JsonCompilationDatabase
+   *
    * @param config
    * @param compileCommandsFile
+   * @throws IOException
    */
   public JsonCompilationDatabase(CxxConfiguration config, File compileCommandsFile) throws IOException {
     LOG.debug("Parsing 'JSON Compilation Database' format");
@@ -54,19 +55,19 @@ public class JsonCompilationDatabase {
     mapper.enable(DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY);
 
     JsonCompilationDatabaseCommandObject[] commandObjects = mapper.readValue(compileCommandsFile,
-        JsonCompilationDatabaseCommandObject[].class);
+      JsonCompilationDatabaseCommandObject[].class);
 
     for (JsonCompilationDatabaseCommandObject commandObject : commandObjects) {
 
       Path cwd = Paths.get(".");
 
-      if (commandObject.directory != null) {
-        cwd = Paths.get(commandObject.directory);
+      if (commandObject.getDirectory() != null) {
+        cwd = Paths.get(commandObject.getDirectory());
       }
 
-      Path absPath = cwd.resolve(commandObject.file);
+      Path absPath = cwd.resolve(commandObject.getFile());
 
-      if ("__global__".equals(commandObject.file)) {
+      if ("__global__".equals(commandObject.getFile())) {
         CxxCompilationUnitSettings globalSettings = new CxxCompilationUnitSettings();
 
         parseCommandObject(globalSettings, commandObject);
@@ -82,22 +83,22 @@ public class JsonCompilationDatabase {
     }
   }
 
-  private void parseCommandObject(CxxCompilationUnitSettings settings,
-      JsonCompilationDatabaseCommandObject commandObject) {
-    settings.setDefines(commandObject.defines);
-    settings.setIncludes(commandObject.includes);
+  private static void parseCommandObject(CxxCompilationUnitSettings settings,
+    JsonCompilationDatabaseCommandObject commandObject) {
+    settings.setDefines(commandObject.getDefines());
+    settings.setIncludes(commandObject.getIncludes());
 
     // No need to parse command lines as we have needed information
-    if (commandObject.defines != null || commandObject.includes != null) {
+    if (!commandObject.getDefines().isEmpty() || !commandObject.getIncludes().isEmpty()) {
       return;
     }
 
     String cmdLine;
 
-    if (commandObject.arguments != null) {
-      cmdLine = commandObject.arguments;
-    } else if (commandObject.command != null) {
-      cmdLine = commandObject.command;
+    if (!commandObject.getArguments().isEmpty()) {
+      cmdLine = commandObject.getArguments();
+    } else if (!commandObject.getCommand().isEmpty()) {
+      cmdLine = commandObject.getCommand();
     } else {
       return;
     }
@@ -141,7 +142,7 @@ public class JsonCompilationDatabase {
     settings.setIncludes(includes);
   }
 
-  private String[] tokenizeCommandLine(String cmdLine) {
+  private static String[] tokenizeCommandLine(String cmdLine) {
     List<String> args = new ArrayList<>();
     boolean escape = false;
     char stringOpen = 0;
@@ -161,8 +162,8 @@ public class JsonCompilationDatabase {
             stringOpen = '\'';
           } else if (ch == '\"') {
             stringOpen = '\"';
-          } else if ((ch == ' ') 
-                  && (sb.length() > 0)) {
+          } else if ((ch == ' ')
+            && (sb.length() > 0)) {
             args.add(sb.toString());
             sb = new StringBuilder();
           }

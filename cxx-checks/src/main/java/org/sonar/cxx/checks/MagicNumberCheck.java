@@ -19,22 +19,26 @@
  */
 package org.sonar.cxx.checks;
 
-import java.util.Set;
+import com.sonar.sslr.api.AstNode;
+import com.sonar.sslr.api.Grammar;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
+import org.sonar.cxx.api.CxxKeyword;
 import org.sonar.cxx.api.CxxTokenType;
 import org.sonar.cxx.parser.CxxGrammarImpl;
-import org.sonar.squidbridge.checks.SquidCheck;
-import com.sonar.sslr.api.AstNode;
-import com.sonar.sslr.api.Grammar;
-import org.sonar.cxx.api.CxxKeyword;
+import org.sonar.cxx.tag.Tag;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
 import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
-import org.sonar.cxx.tag.Tag;
+import org.sonar.squidbridge.checks.SquidCheck;
 
+/**
+ * Find Magic numbers in source code
+ *
+ */
 @Rule(
   key = "MagicNumber",
   name = "Magic number should not be used",
@@ -44,7 +48,8 @@ import org.sonar.cxx.tag.Tag;
 @SqaleConstantRemediation("5min")
 public class MagicNumberCheck extends SquidCheck<Grammar> {
 
-  private static final String DEFAULT_EXCEPTIONS = "0,1,0x0,0x00,.0,.1,0.0,1.0,0u,1u,0ul,1ul,1.0f,0.0f,0LL,1LL,0ULL,1ULL";
+  private static final String DEFAULT_EXCEPTIONS
+    = "0,1,0x0,0x00,.0,.1,0.0,1.0,0u,1u,0ul,1ul,1.0f,0.0f,0LL,1LL,0ULL,1ULL";
 
   @RuleProperty(
     key = "exceptions",
@@ -79,7 +84,7 @@ public class MagicNumberCheck extends SquidCheck<Grammar> {
     }
   }
 
-  private boolean isConstexpr(AstNode node) {
+  private static boolean isConstexpr(AstNode node) {
     AstNode decl = null;
 
     if (node.hasAncestor(CxxGrammarImpl.initDeclarator)) {
@@ -95,7 +100,7 @@ public class MagicNumberCheck extends SquidCheck<Grammar> {
     }
   }
 
-  private boolean isConst(AstNode node) {
+  private static boolean isConst(AstNode node) {
     AstNode decl = null;
     if (node.hasAncestor(CxxGrammarImpl.initDeclarator)) {
       decl = node.getFirstAncestor(CxxGrammarImpl.simpleDeclaration);
@@ -116,19 +121,19 @@ public class MagicNumberCheck extends SquidCheck<Grammar> {
     return exceptionsSet.contains(node.getTokenOriginalValue());
   }
 
-  private boolean isInEnum(AstNode node) {
+  private static boolean isInEnum(AstNode node) {
     return node.hasAncestor(CxxGrammarImpl.enumeratorList);
   }
 
-  private boolean isArrayInitializer(AstNode node) {
+  private static boolean isArrayInitializer(AstNode node) {
     return node.hasAncestor(CxxGrammarImpl.bracedInitList);
   }
 
-  private boolean isGenerated(AstNode node) {
+  private static boolean isGenerated(AstNode node) {
     return node.getToken().isGeneratedCode();
   }
-  
-  private boolean isNullPtr(AstNode node) {
+
+  private static boolean isNullPtr(AstNode node) {
     return "nullptr".equals(node.getTokenValue());
   }
 

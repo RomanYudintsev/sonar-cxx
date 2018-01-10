@@ -19,11 +19,10 @@
  */
 package org.sonar.cxx.parser;
 
+import org.junit.Test;
 import static org.sonar.sslr.tests.Assertions.assertThat;
 
-import org.junit.Test;
-
-public class StatementTest extends ParserBaseTest {
+public class StatementTest extends ParserBaseTestHelper {
 
   @Test
   public void statement() {
@@ -128,7 +127,7 @@ public class StatementTest extends ParserBaseTest {
     assertThat(p).matches("switch ( condition ) statement");
     assertThat(p).matches("switch ( initStatement condition ) statement");
   }
- 
+
   @Test
   public void switchStatement_reallife() {
     p.setRootRule(g.rule(CxxGrammarImpl.selectionStatement));
@@ -225,7 +224,7 @@ public class StatementTest extends ParserBaseTest {
 
     // CLI extension
     assertThat(p).matches("for each(String^% s in arr) { s = i++.ToString(); }");
-    
+
     // C++17 structered bindings
     assertThat(p).matches("for (const auto&[key, val] : mymap) { std::cout << key << \": \" << val << std::endl; }");
   }
@@ -249,7 +248,7 @@ public class StatementTest extends ParserBaseTest {
 
     assertThat(p).matches("forRangeDeclSpecifierSeq declarator");
     assertThat(p).matches("attributeSpecifierSeq forRangeDeclSpecifierSeq declarator");
-    
+
     assertThat(p).matches("declSpecifierSeq [ identifierList ]");
     assertThat(p).matches("attributeSpecifierSeq declSpecifierSeq [ identifierList ]");
     assertThat(p).matches("attributeSpecifierSeq declSpecifierSeq [ identifierList ]");

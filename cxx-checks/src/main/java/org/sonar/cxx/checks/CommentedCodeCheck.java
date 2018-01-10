@@ -19,13 +19,19 @@
  */
 package org.sonar.cxx.checks;
 
-import java.util.Set;
+import com.sonar.sslr.api.AstAndTokenVisitor;
+import com.sonar.sslr.api.Grammar;
+import com.sonar.sslr.api.Token;
+import com.sonar.sslr.api.Trivia;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
-
 import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.cxx.api.CppKeyword;
+import org.sonar.cxx.tag.Tag;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.squidbridge.recognizer.CodeRecognizer;
 import org.sonar.squidbridge.recognizer.ContainsDetector;
@@ -33,13 +39,6 @@ import org.sonar.squidbridge.recognizer.Detector;
 import org.sonar.squidbridge.recognizer.EndWithDetector;
 import org.sonar.squidbridge.recognizer.KeywordsDetector;
 import org.sonar.squidbridge.recognizer.LanguageFootprint;
-import com.sonar.sslr.api.AstAndTokenVisitor;
-import com.sonar.sslr.api.Grammar;
-import com.sonar.sslr.api.Token;
-import com.sonar.sslr.api.Trivia;
-import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
-import org.sonar.cxx.tag.Tag;
 
 /**
  * CommentedCodeCheck
@@ -77,14 +76,15 @@ public class CommentedCodeCheck extends SquidCheck<Grammar> implements AstAndTok
   @Override
   public void visitToken(Token token) {
     for (Trivia trivia : token.getTrivia()) {
-      if (trivia.isComment() 
-        && !trivia.getToken().getOriginalValue().startsWith("///")
-        && !trivia.getToken().getOriginalValue().startsWith("//!")
-        && !trivia.getToken().getOriginalValue().startsWith("/**") 
-        && !trivia.getToken().getOriginalValue().startsWith("/*!")
-        && !trivia.getToken().getOriginalValue().startsWith("/*@") 
-        && !trivia.getToken().getOriginalValue().startsWith("//@")) {
-        String lines[] = regexpToDivideStringByLine.split(getContext().getCommentAnalyser().getContents(trivia.getToken().getOriginalValue())); 
+      String value = trivia.getToken().getOriginalValue();
+      if (trivia.isComment()
+        && !value.startsWith("///")
+        && !value.startsWith("//!")
+        && !value.startsWith("/**")
+        && !value.startsWith("/*!")
+        && !value.startsWith("/*@")
+        && !value.startsWith("//@")) {
+        String[] lines = regexpToDivideStringByLine.split(getContext().getCommentAnalyser().getContents(value));
 
         for (int lineOffset = 0; lineOffset < lines.length; lineOffset++) {
           if (codeRecognizer.isLineOfCode(lines[lineOffset])) {

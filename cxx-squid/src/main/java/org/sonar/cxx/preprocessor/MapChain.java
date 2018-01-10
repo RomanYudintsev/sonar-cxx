@@ -23,21 +23,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * MapChain 
+ * MapChain
+ *
  * @param <K>
  * @param <V>
- * 
+ *
  */
-public class MapChain<K, V> { 
+public class MapChain<K, V> {
 
   private final Map<K, V> highPrioMap = new HashMap<>();
   private final Map<K, V> lowPrioMap = new HashMap<>();
   private final Map<K, V> highPrioDisabled = new HashMap<>();
   private final Map<K, V> lowPrioDisabled = new HashMap<>();
-  private boolean isHighPrioEnabled = false;
+  private boolean isHighPrioEnabled;
 
   /**
    * get
+   *
    * @param key
    * @return V
    */
@@ -52,6 +54,7 @@ public class MapChain<K, V> {
 
   /**
    * put
+   *
    * @param key
    * @param value
    * @return V
@@ -66,6 +69,7 @@ public class MapChain<K, V> {
 
   /**
    * removeLowPrio
+   *
    * @param key
    * @return V
    */
@@ -82,6 +86,7 @@ public class MapChain<K, V> {
 
   /**
    * disable
+   *
    * @param key
    */
   public void disable(K key) {
@@ -91,6 +96,7 @@ public class MapChain<K, V> {
 
   /**
    * enable
+   *
    * @param key
    */
   public void enable(K key) {

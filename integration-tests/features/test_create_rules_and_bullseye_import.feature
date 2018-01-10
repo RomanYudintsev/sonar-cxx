@@ -1,4 +1,4 @@
-@SqApi56 @SqApi62
+@SqApi67
 Feature: GoogleTestWithBullseyeAndVsProject
   This test verifies that analysis is able to import bullseye coverage reports and import custom rules reports.
   Custom rules are created using Rest API, after test ends rules are deleted.
@@ -40,9 +40,7 @@ Feature: GoogleTestWithBullseyeAndVsProject
       | duplicated_blocks        | 0     |
       | duplicated_files         | 0     |
       | complexity               | 4     |
-      | function_complexity      | 1.3   |
       | file_complexity          | 2.0   |
-      | class_complexity         | 4     |
       | violations               | 19    |
       | line_coverage            | 100   |
       | branch_coverage          | 50    |

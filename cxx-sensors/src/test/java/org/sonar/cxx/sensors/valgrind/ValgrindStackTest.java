@@ -19,14 +19,11 @@
  */
 package org.sonar.cxx.sensors.valgrind;
 
-import org.sonar.cxx.sensors.valgrind.ValgrindFrame;
-import org.sonar.cxx.sensors.valgrind.ValgrindStack;
-import static org.junit.Assert.assertEquals;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -57,31 +54,31 @@ public class ValgrindStackTest {
 
   @Test
   public void stackDoesntEqualsNull() {
-    assert (!stack.equals(null));
+    assertThat(stack).isNotNull();
   }
 
   @Test
   public void stackDoesntEqualsMiscObject() {
-    assert (!stack.equals("string"));
+    assertThat(stack).isNotEqualTo("string");
   }
 
   @Test
   public void stackEqualityIsReflexive() {
-    assert (stack.equals(stack));
-    assert (otherStack.equals(otherStack));
-    assert (equalStack.equals(equalStack));
+    assertThat(stack).isEqualTo(stack);
+    assertThat(otherStack).isEqualTo(otherStack);
+    assertThat(equalStack).isEqualTo(equalStack);
   }
 
   @Test
   public void stackEqualityWorksAsExpected() {
-    assert (stack.equals(equalStack));
-    assert (!stack.equals(otherStack));
+    assertThat(stack).isEqualTo(equalStack);
+    assertThat(stack).isNotEqualTo(otherStack);
   }
 
   @Test
   public void stackHashWorksAsExpected() {
-    assert (stack.hashCode() == equalStack.hashCode());
-    assert (stack.hashCode() != otherStack.hashCode());
+    assertThat(stack.hashCode() == equalStack.hashCode()).isTrue();
+    assertThat(stack.hashCode() != otherStack.hashCode()).isTrue();
   }
 
   @Test
@@ -102,7 +99,7 @@ public class ValgrindStackTest {
 
   @Test
   public void getLastOwnFrame_returnsNullOnEmptyStack() {
-    assertEquals(new ValgrindStack().getLastOwnFrame("somepath"), null);
+    assertEquals(null, new ValgrindStack().getLastOwnFrame("somepath"));
   }
 
   @Test
@@ -111,7 +108,7 @@ public class ValgrindStackTest {
     ValgrindStack stack = new ValgrindStack();
     stack.addFrame(frame);
 
-    assertEquals(new ValgrindStack().getLastOwnFrame("somepath"), null);
+    assertEquals(null, new ValgrindStack().getLastOwnFrame("somepath"));
   }
 
   @Test

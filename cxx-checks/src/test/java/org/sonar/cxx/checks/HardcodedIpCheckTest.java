@@ -39,10 +39,11 @@ public class HardcodedIpCheckTest {
   private final HardcodedIpCheck check = new HardcodedIpCheck();
 
   @Test
+  @SuppressWarnings("squid:S2699") // ... verify contains the assertion
   public void detected() throws UnsupportedEncodingException, IOException {
     CxxFileTester tester = CxxFileTesterHelper.CreateCxxFileTester("src/test/resources/checks/HardcodedIpCheck.cc", ".");
-    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);   
-    
+    SourceFile file = CxxAstScanner.scanSingleFile(tester.cxxFile, tester.sensorContext, CxxFileTesterHelper.mockCxxLanguage(), check);
+
     CheckMessagesVerifier.verify(file.getCheckMessages())
       .next().atLine(5).withMessage("Make this IP \"0.0.0.0\" address configurable.")
       .next().atLine(6).withMessage("Make this IP \"http://192.168.0.1/admin.html\" address configurable.");

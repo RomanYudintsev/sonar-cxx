@@ -23,9 +23,7 @@ import java.text.ParseException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
-
 import javax.xml.stream.XMLStreamException;
-
 import org.codehaus.staxmate.in.ElementFilter;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
@@ -55,8 +53,8 @@ public class XunitReportParser implements XmlStreamHandler {
     SMInputCursor testSuiteCursor = rootCursor.constructDescendantCursor(new ElementFilter("testsuite"));
     try {
       testSuiteCursor.getNext();
-    } catch (com.ctc.wstx.exc.WstxEOFException eofExc) { 
-      throw new EmptyReportException("Cannot read Xunit report", eofExc); 
+    } catch (com.ctc.wstx.exc.WstxEOFException eofExc) {
+      throw new EmptyReportException("Cannot read Xunit report", eofExc);
     }
 
     do {
@@ -80,7 +78,7 @@ public class XunitReportParser implements XmlStreamHandler {
     }
   }
 
-  private TestCase parseTestCaseTag(SMInputCursor testCaseCursor, String tsName, String tsFilename)
+  private static TestCase parseTestCaseTag(SMInputCursor testCaseCursor, String tsName, String tsFilename)
     throws XMLStreamException {
     String classname = testCaseCursor.getAttrValue("classname");
     String tcFilename = testCaseCursor.getAttrValue("filename");
@@ -116,7 +114,7 @@ public class XunitReportParser implements XmlStreamHandler {
     return new TestCase(name, time.intValue(), status, stack, msg, classname, tcFilename, tsName, tsFilename);
   }
 
-  private double parseTime(SMInputCursor testCaseCursor)
+  private static double parseTime(SMInputCursor testCaseCursor)
     throws XMLStreamException {
     double time = 0.0;
     try {
@@ -134,7 +132,7 @@ public class XunitReportParser implements XmlStreamHandler {
     return time;
   }
 
-  private String parseTestCaseName(SMInputCursor testCaseCursor) throws XMLStreamException {
+  private static String parseTestCaseName(SMInputCursor testCaseCursor) throws XMLStreamException {
     String name = testCaseCursor.getAttrValue("name");
     String classname = testCaseCursor.getAttrValue("classname");
     if (classname != null) {

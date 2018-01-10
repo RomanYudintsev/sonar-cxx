@@ -20,22 +20,18 @@
 package org.sonar.cxx.preprocessor;
 
 import static com.sonar.sslr.api.GenericTokenType.EOF;
+import com.sonar.sslr.api.Token;
+import com.sonar.sslr.impl.Lexer;
 import static com.sonar.sslr.test.lexer.LexerMatchers.hasToken;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.junit.Assert.assertThat;
-
 import java.util.List;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThat;
 import org.junit.Test;
 import org.sonar.cxx.api.CxxTokenType;
 
-import com.sonar.sslr.api.Token;
-import com.sonar.sslr.impl.Lexer;
-import org.sonar.cxx.CxxFileTesterHelper;
-
 public class IncludeLexerTest {
 
-  private final static Lexer lexer = IncludeLexer.create(CxxFileTesterHelper.mockCxxLanguage());
+  private final static Lexer lexer = IncludeLexer.create();
 
   @Test
   public void proper_preprocessor_directives_are_created() {

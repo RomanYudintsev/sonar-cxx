@@ -19,12 +19,9 @@
  */
 package org.sonar.cxx.sensors.compiler;
 
-import org.sonar.cxx.sensors.compiler.CxxCompilerVcRuleRepository;
-import org.sonar.cxx.sensors.compiler.CxxCompilerGccRuleRepository;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
+import static org.mockito.Mockito.mock;
 import org.sonar.api.platform.ServerFileSystem;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.server.rule.RulesDefinitionXmlLoader;
@@ -36,7 +33,7 @@ public class CxxCompilerRuleRepositoryTest {
   @Test
   public void createVcRulesTest() {
     CxxLanguage language = TestUtils.mockCxxLanguage();
-    
+
     CxxCompilerVcRuleRepository def = new CxxCompilerVcRuleRepository(
       mock(ServerFileSystem.class),
       new RulesDefinitionXmlLoader(), language);
@@ -45,13 +42,13 @@ public class CxxCompilerRuleRepositoryTest {
     def.define(context);
 
     RulesDefinition.Repository repo = context.repository(CxxCompilerVcRuleRepository.KEY);
-    assertThat(repo.rules()).hasSize(840);
+    assertThat(repo.rules()).hasSize(866);
   }
 
   @Test
   public void createGccRulesTest() {
     CxxLanguage language = TestUtils.mockCxxLanguage();
-    
+
     CxxCompilerGccRuleRepository def = new CxxCompilerGccRuleRepository(
       mock(ServerFileSystem.class),
       new RulesDefinitionXmlLoader(), language);

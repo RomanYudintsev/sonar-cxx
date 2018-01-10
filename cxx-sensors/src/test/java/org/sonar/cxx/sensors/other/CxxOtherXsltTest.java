@@ -19,17 +19,16 @@
  */
 package org.sonar.cxx.sensors.other;
 
-import static org.mockito.Mockito.when;
-
 import java.io.File;
+import java.util.Optional;
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
-import org.apache.commons.io.FileUtils;
+import static org.mockito.Mockito.when;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.internal.MapSettings;
 import org.sonar.cxx.CxxLanguage;
 import org.sonar.cxx.sensors.utils.TestUtils;
 
@@ -37,12 +36,13 @@ public class CxxOtherXsltTest {
 
   private FileSystem fs;
   private CxxLanguage language;
-  private Settings settings;
+  private MapSettings settings = new MapSettings();
+
+  ;
 
   @Before
   public void setUp() {
     fs = TestUtils.mockFileSystem();
-    settings = new Settings();
     language = TestUtils.mockCxxLanguage();
     when(language.getPluginProperty(CxxOtherSensor.REPORT_PATH_KEY)).thenReturn("sonar.cxx." + CxxOtherSensor.REPORT_PATH_KEY);
     when(language.getPluginProperty("other.xslt.1.stylesheet")).thenReturn("sonar.cxx.other.xslt.1.stylesheet");
@@ -55,12 +55,12 @@ public class CxxOtherXsltTest {
   public void shouldReportNothingWhenNoReportFound() {
     SensorContextTester context = SensorContextTester.create(fs.baseDir());
 
-    when(language.getStringOption(CxxOtherSensor.REPORT_PATH_KEY)).thenReturn("notexistingpath");
-    when(language.getStringOption(CxxOtherSensor.OTHER_XSLT_KEY + "1" + CxxOtherSensor.STYLESHEET_KEY)).thenReturn("notexistingpath");
-    when(language.getStringOption(CxxOtherSensor.OTHER_XSLT_KEY + "2" + CxxOtherSensor.STYLESHEET_KEY)).thenReturn("notexistingpath");
-    when(language.getStringArrayOption(CxxOtherSensor.OTHER_XSLT_KEY + "1" + CxxOtherSensor.INPUT_KEY)).thenReturn(new String[] {"notexistingpath"});
-    when(language.getStringArrayOption(CxxOtherSensor.OTHER_XSLT_KEY + "1" + CxxOtherSensor.OUTPUT_KEY)).thenReturn(new String[] {"notexistingpath"});
-    CxxOtherSensor sensor = new CxxOtherSensor(language, settings);
+    when(language.getStringOption(CxxOtherSensor.REPORT_PATH_KEY)).thenReturn(Optional.of("notexistingpath"));
+    when(language.getStringOption(CxxOtherSensor.OTHER_XSLT_KEY + "1" + CxxOtherSensor.STYLESHEET_KEY)).thenReturn(Optional.of("notexistingpath"));
+    when(language.getStringOption(CxxOtherSensor.OTHER_XSLT_KEY + "2" + CxxOtherSensor.STYLESHEET_KEY)).thenReturn(Optional.of("notexistingpath"));
+    when(language.getStringArrayOption(CxxOtherSensor.OTHER_XSLT_KEY + "1" + CxxOtherSensor.INPUT_KEY)).thenReturn(new String[]{"notexistingpath"});
+    when(language.getStringArrayOption(CxxOtherSensor.OTHER_XSLT_KEY + "1" + CxxOtherSensor.OUTPUT_KEY)).thenReturn(new String[]{"notexistingpath"});
+    CxxOtherSensor sensor = new CxxOtherSensor(language);
 
     sensor.execute(context);
 
@@ -88,7 +88,7 @@ public class CxxOtherXsltTest {
 
     context.setSettings(settings);
 
-    CxxOtherSensor sensor = new CxxOtherSensor(language, settings);
+    CxxOtherSensor sensor = new CxxOtherSensor(language);
     sensor.transformFiles(fs.baseDir(), context);
 
     File reportBefore = new File(fs.baseDir() + "/" + inputFile);

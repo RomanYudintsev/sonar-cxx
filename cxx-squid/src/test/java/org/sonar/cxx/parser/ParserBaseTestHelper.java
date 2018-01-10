@@ -19,24 +19,28 @@
  */
 package org.sonar.cxx.parser;
 
-import static org.mockito.Mockito.mock;
-
-import org.junit.Test;
-import org.sonar.squidbridge.SquidAstVisitorContext;
-
 import com.sonar.sslr.api.Grammar;
 import com.sonar.sslr.impl.Parser;
+import static org.mockito.Mockito.mock;
+import org.sonar.cxx.CxxConfiguration;
 import org.sonar.cxx.CxxFileTesterHelper;
+import org.sonar.squidbridge.SquidAstVisitorContext;
+import org.sonar.sslr.grammar.GrammarRuleKey;
 
-public class SomethingTest {
+public class ParserBaseTestHelper {
 
-  Parser<Grammar> p = CxxParser.create(CxxFileTesterHelper.mockCxxLanguage(), mock(SquidAstVisitorContext.class));
-  Grammar g = p.getGrammar();
+  protected CxxConfiguration conf = null;
+  protected Parser<Grammar> p = null;
+  protected Grammar g = null;
 
-  @Test
-  public void test() {
-    //p.setRootRule(g.rule(CxxGrammarImpl.TEST));
+  public ParserBaseTestHelper() {
+    conf = new CxxConfiguration();
+    conf.setErrorRecoveryEnabled(false);
+    p = CxxParser.create(mock(SquidAstVisitorContext.class), conf, CxxFileTesterHelper.mockCxxLanguage());
+    g = p.getGrammar();
+  }
 
-    //assertThat(p).parse("void foo() override {};"));
+  void mockRule(GrammarRuleKey key) {
+    g.rule(key).mock(); //@ToDo deprecated mock
   }
 }

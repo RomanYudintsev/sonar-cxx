@@ -21,18 +21,14 @@ package org.sonar.cxx.parser;
 
 import static com.sonar.sslr.api.GenericTokenType.EOF;
 import static com.sonar.sslr.api.GenericTokenType.IDENTIFIER;
+import com.sonar.sslr.api.Grammar;
+import org.sonar.cxx.CxxConfiguration;
+import org.sonar.cxx.api.CxxKeyword;
 import static org.sonar.cxx.api.CxxTokenType.CHARACTER;
 import static org.sonar.cxx.api.CxxTokenType.NUMBER;
 import static org.sonar.cxx.api.CxxTokenType.STRING;
-
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
-import org.sonar.cxx.CxxConfiguration;
-import org.sonar.cxx.api.CxxKeyword;
 import org.sonar.sslr.grammar.GrammarRuleKey;
 import org.sonar.sslr.grammar.LexerfulGrammarBuilder;
-
-import com.sonar.sslr.api.Grammar;
 
 /**
  * Parsing expression grammar
@@ -53,6 +49,7 @@ import com.sonar.sslr.api.Grammar;
 /**
  * Based on the C++ Standard, Appendix A
  */
+@SuppressWarnings({"squid:S00115", "squid:S00103"})
 public enum CxxGrammarImpl implements GrammarRuleKey {
 
   // Misc
@@ -353,8 +350,6 @@ public enum CxxGrammarImpl implements GrammarRuleKey {
   // CUDA extension
   cudaKernel;
 
-  public static final Logger LOG = Loggers.get(CxxGrammarImpl.class);
-
   public static Grammar create(CxxConfiguration conf) {
     LexerfulGrammarBuilder b = LexerfulGrammarBuilder.create();
 
@@ -424,7 +419,7 @@ public enum CxxGrammarImpl implements GrammarRuleKey {
   //
   private static void toplevel(LexerfulGrammarBuilder b, CxxConfiguration conf) {
 
-    if (conf.getErrorRecoveryEnabled() == true) {
+    if (conf.getErrorRecoveryEnabled()) {
       b.rule(translationUnit).is(
         b.zeroOrMore(
           b.firstOf(

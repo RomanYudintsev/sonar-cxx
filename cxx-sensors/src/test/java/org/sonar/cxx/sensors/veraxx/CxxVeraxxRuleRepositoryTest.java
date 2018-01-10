@@ -19,11 +19,9 @@
  */
 package org.sonar.cxx.sensors.veraxx;
 
-import org.sonar.cxx.sensors.veraxx.CxxVeraxxRuleRepository;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
+import static org.mockito.Mockito.mock;
 import org.sonar.api.platform.ServerFileSystem;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.server.rule.RulesDefinitionXmlLoader;

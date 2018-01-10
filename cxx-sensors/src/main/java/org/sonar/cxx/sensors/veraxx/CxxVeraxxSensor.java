@@ -20,12 +20,10 @@
 package org.sonar.cxx.sensors.veraxx;
 
 import java.io.File;
-
 import org.codehaus.staxmate.in.SMHierarchicCursor;
 import org.codehaus.staxmate.in.SMInputCursor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.cxx.CxxLanguage;
@@ -39,15 +37,17 @@ import org.sonar.cxx.sensors.utils.StaxParser;
  */
 public class CxxVeraxxSensor extends CxxReportSensor {
 
-  private static final Logger LOG = Loggers.get(CxxVeraxxSensor.class);  
+  private static final Logger LOG = Loggers.get(CxxVeraxxSensor.class);
   public static final String REPORT_PATH_KEY = "vera.reportPath";
   public static final String KEY = "Vera++";
-  
+
   /**
-   * {@inheritDoc}
+   * CxxVeraxxSensor for C++ Vera Sensor
+   *
+   * @param language defines settings C or C++
    */
-  public CxxVeraxxSensor(CxxLanguage language, Settings settings) {
-    super(language, settings);
+  public CxxVeraxxSensor(CxxLanguage language) {
+    super(language);
   }
 
   @Override
@@ -59,7 +59,7 @@ public class CxxVeraxxSensor extends CxxReportSensor {
   public void describe(SensorDescriptor descriptor) {
     descriptor.onlyOnLanguage(this.language.getKey()).name(language.getName() + " VeraxxSensor");
   }
-  
+
   @Override
   protected void processReport(final SensorContext context, File report)
     throws javax.xml.stream.XMLStreamException {
@@ -73,7 +73,7 @@ public class CxxVeraxxSensor extends CxxReportSensor {
         public void stream(SMHierarchicCursor rootCursor) throws javax.xml.stream.XMLStreamException {
           try {
             rootCursor.advance();
-          } catch (com.ctc.wstx.exc.WstxEOFException eofExc) { 
+          } catch (com.ctc.wstx.exc.WstxEOFException eofExc) {
             throw new EmptyReportException("Cannot read vera++ report ", eofExc);
           }
 
@@ -107,9 +107,9 @@ public class CxxVeraxxSensor extends CxxReportSensor {
       LOG.error("Ignore XML error from Veraxx '{}'", CxxUtils.getStackTrace(e));
     }
   }
-  
+
   @Override
   protected String getSensorKey() {
     return KEY;
-  }  
+  }
 }

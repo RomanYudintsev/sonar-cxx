@@ -19,24 +19,21 @@
  */
 package org.sonar.cxx.sensors.utils;
 
-import static org.fest.assertions.Assertions.assertThat;
-
+import com.fasterxml.jackson.databind.JsonMappingException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
 import org.sonar.cxx.CxxCompilationUnitSettings;
 import org.sonar.cxx.CxxConfiguration;
-
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 public class JsonCompilationDatabaseTest {
 
   @Test
   public void testGlobalSettings() throws Exception {
-    CxxConfiguration conf = new CxxConfiguration(TestUtils.mockCxxLanguage());
+    CxxConfiguration conf = new CxxConfiguration();
 
     File file = new File("src/test/resources/org/sonar/cxx/sensors/json-compilation-database-project/compile_commands.json");
 
@@ -53,7 +50,7 @@ public class JsonCompilationDatabaseTest {
 
   @Test
   public void testExtensionSettings() throws Exception {
-    CxxConfiguration conf = new CxxConfiguration(TestUtils.mockCxxLanguage());
+    CxxConfiguration conf = new CxxConfiguration();
     File file = new File("src/test/resources/org/sonar/cxx/sensors/json-compilation-database-project/compile_commands.json");
     new JsonCompilationDatabase(conf, file);
 
@@ -72,7 +69,7 @@ public class JsonCompilationDatabaseTest {
 
   @Test
   public void testCommandSettings() throws Exception {
-    CxxConfiguration conf = new CxxConfiguration(TestUtils.mockCxxLanguage());
+    CxxConfiguration conf = new CxxConfiguration();
 
     File file = new File("src/test/resources/org/sonar/cxx/sensors/json-compilation-database-project/compile_commands.json");
 
@@ -98,7 +95,7 @@ public class JsonCompilationDatabaseTest {
 
   @Test
   public void testArgumentSettings() throws Exception {
-    CxxConfiguration conf = new CxxConfiguration(TestUtils.mockCxxLanguage());
+    CxxConfiguration conf = new CxxConfiguration();
 
     File file = new File("src/test/resources/org/sonar/cxx/sensors/json-compilation-database-project/compile_commands.json");
 
@@ -124,7 +121,7 @@ public class JsonCompilationDatabaseTest {
 
   @Test
   public void testUnknownUnitSettings() throws Exception {
-    CxxConfiguration conf = new CxxConfiguration(TestUtils.mockCxxLanguage());
+    CxxConfiguration conf = new CxxConfiguration();
 
     File file = new File("src/test/resources/org/sonar/cxx/sensors/json-compilation-database-project/compile_commands.json");
 
@@ -139,31 +136,21 @@ public class JsonCompilationDatabaseTest {
     assertThat(cus).isNull();
   }
 
-  @Test
+  @Test(expected = JsonMappingException.class)
   public void testInvalidJson() throws Exception {
-    CxxConfiguration conf = new CxxConfiguration(TestUtils.mockCxxLanguage());
+    CxxConfiguration conf = new CxxConfiguration();
 
     File file = new File("src/test/resources/org/sonar/cxx/sensors/json-compilation-database-project/invalid.json");
 
-    try {
-      new JsonCompilationDatabase(conf, file);
-      assertThat(true).isFalse();
-    } catch (JsonMappingException e) {
-      // Expect to get exception
-    }
+    new JsonCompilationDatabase(conf, file);
   }
 
-  @Test
+  @Test(expected = FileNotFoundException.class)
   public void testFileNotFound() throws Exception {
-    CxxConfiguration conf = new CxxConfiguration(TestUtils.mockCxxLanguage());
+    CxxConfiguration conf = new CxxConfiguration();
 
     File file = new File("src/test/resources/org/sonar/cxx/sensors/json-compilation-database-project/not-found.json");
 
-    try {
-      new JsonCompilationDatabase(conf, file);
-      assertThat(true).isFalse();
-    } catch (FileNotFoundException e) {
-      // Expect to get exception
-    }
+    new JsonCompilationDatabase(conf, file);
   }
 }

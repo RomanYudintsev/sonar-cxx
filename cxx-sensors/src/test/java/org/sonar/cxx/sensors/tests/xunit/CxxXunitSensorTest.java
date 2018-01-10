@@ -19,17 +19,17 @@
  */
 package org.sonar.cxx.sensors.tests.xunit;
 
-import org.sonar.cxx.sensors.pclint.CxxPCLintSensor;
-import org.sonar.cxx.sensors.tests.xunit.CxxXunitSensor;
 import java.io.File;
-import static org.fest.assertions.Assertions.assertThat;
-
+import java.util.Optional;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Mockito.when;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.internal.MapSettings;
+import org.sonar.api.measures.CoreMetrics;
 import org.sonar.cxx.CxxLanguage;
 import org.sonar.cxx.sensors.utils.TestUtils;
 
@@ -37,17 +37,16 @@ public class CxxXunitSensorTest {
 
   private FileSystem fs;
   private CxxLanguage language;
-  private Settings settings;
+  private MapSettings settings = new MapSettings();
 
   @Before
   public void setUp() {
     fs = TestUtils.mockFileSystem();
-    settings = new Settings();
     language = TestUtils.mockCxxLanguage();
     when(language.getPluginProperty(CxxXunitSensor.REPORT_PATH_KEY)).thenReturn("sonar.cxx." + CxxXunitSensor.REPORT_PATH_KEY);
     when(language.getPluginProperty(CxxXunitSensor.XSLT_URL_KEY)).thenReturn("sonar.cxx." + CxxXunitSensor.XSLT_URL_KEY);
-    when(language.IsRecoveryEnabled()).thenReturn(false);
-    }
+    when(language.IsRecoveryEnabled()).thenReturn(Optional.of(Boolean.FALSE));
+  }
 
   @Test
   public void shouldReportNothingWhenNoReportFound() {
@@ -56,11 +55,34 @@ public class CxxXunitSensorTest {
     settings.setProperty(language.getPluginProperty(CxxXunitSensor.REPORT_PATH_KEY), "notexistingpath");
     context.setSettings(settings);
 
-    CxxXunitSensor sensor = new CxxXunitSensor(language, settings);
+    CxxXunitSensor sensor = new CxxXunitSensor(language);
 
     sensor.execute(context);
 
     assertThat(context.measures(context.module().key())).hasSize(0);
+  }
+
+  @Test
+  public void shouldReadXunitReport() {
+    SensorContextTester context = SensorContextTester.create(fs.baseDir());
+
+    settings.setProperty(language.getPluginProperty(CxxXunitSensor.REPORT_PATH_KEY), "xunit-reports/xunit-result-SAMPLE_with_fileName.xml");
+    context.setSettings(settings);
+
+    CxxXunitSensor sensor = new CxxXunitSensor(language);
+
+    sensor.execute(context);
+
+    assertThat(context.measures(context.module().key())).hasSize(6);
+    assertThat(context.measures(context.module().key()))
+      .extracting("metric.key", "value")
+      .containsOnly(
+        tuple(CoreMetrics.TESTS_KEY, 3),
+        tuple(CoreMetrics.SKIPPED_TESTS_KEY, 0),
+        tuple(CoreMetrics.TEST_FAILURES_KEY, 0),
+        tuple(CoreMetrics.TEST_ERRORS_KEY, 0),
+        tuple(CoreMetrics.TEST_SUCCESS_DENSITY_KEY, 100.0),
+        tuple(CoreMetrics.TEST_EXECUTION_TIME_KEY, 0L));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -69,8 +91,8 @@ public class CxxXunitSensorTest {
 
     settings.setProperty(language.getPluginProperty(CxxXunitSensor.REPORT_PATH_KEY), "xunit-reports/invalid-time-xunit-report.xml");
     context.setSettings(settings);
-    
-    CxxXunitSensor sensor = new CxxXunitSensor(language, settings);
+
+    CxxXunitSensor sensor = new CxxXunitSensor(language);
 
     sensor.execute(context);
   }
@@ -78,12 +100,10 @@ public class CxxXunitSensorTest {
   @Test(expected = java.net.MalformedURLException.class)
   public void transformReport_shouldThrowWhenGivenNotExistingStyleSheet()
     throws java.io.IOException, javax.xml.transform.TransformerException {
-//    SensorContextTester context = SensorContextTester.create(fs.baseDir());
 
-    when(language.getStringOption(CxxXunitSensor.XSLT_URL_KEY)).thenReturn("whatever");    
-//    settings.setProperty(language.getPluginProperty(CxxXunitSensor.XSLT_URL_KEY), "whatever");
-//    context.setSettings(settings);
-    CxxXunitSensor sensor = new CxxXunitSensor(language, settings);
+    when(language.getStringOption(CxxXunitSensor.XSLT_URL_KEY)).thenReturn(Optional.of("whatever"));
+
+    CxxXunitSensor sensor = new CxxXunitSensor(language);
     sensor.transformReport(cppunitReport());
   }
 
@@ -91,14 +111,13 @@ public class CxxXunitSensorTest {
   public void transformReport_shouldTransformCppunitReport()
     throws java.io.IOException, javax.xml.transform.TransformerException {
 
-    when(language.getStringOption(CxxXunitSensor.XSLT_URL_KEY)).thenReturn("cppunit-1.x-to-junit-1.0.xsl");
-    
-    CxxXunitSensor sensor = new CxxXunitSensor(language, settings);
+    when(language.getStringOption(CxxXunitSensor.XSLT_URL_KEY)).thenReturn(Optional.of("cppunit-1.x-to-junit-1.0.xsl"));
+
+    CxxXunitSensor sensor = new CxxXunitSensor(language);
     File reportBefore = cppunitReport();
 
     File reportAfter = sensor.transformReport(reportBefore);
-
-    assert (reportAfter != reportBefore);
+    assertThat(reportAfter).isNotSameAs(reportBefore);
   }
 
   File cppunitReport() {
