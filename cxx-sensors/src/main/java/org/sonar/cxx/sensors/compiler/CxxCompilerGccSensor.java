@@ -42,9 +42,9 @@ public class CxxCompilerGccSensor extends CxxReportSensor {
   public static final String REPORT_REGEX_DEF = "compiler.gcc.regex";
   public static final String REPORT_CHARSET_DEF = "compiler.gcc.charset";
   public static final String PARSER_KEY_DEF = "compiler.gcc.parser";
-  public static final String DEFAULT_PARSER_DEF = CxxCompilerGccParser.COMPILER_KEY;
+  public static final String DEFAULT_PARSER_DEF = CxxCompilerGccParser.KEY;
   public static final String DEFAULT_CHARSET_DEF = "UTF-8";
-  public static final String COMPILER_KEY = "compiler.gcc";
+  public static final String KEY = "compiler.gcc";
 
   private CompilerParser parser;
 
@@ -66,37 +66,23 @@ public class CxxCompilerGccSensor extends CxxReportSensor {
   }
 
   @Override
-  public void describe(SensorDescriptor descriptor) {
-    descriptor.onlyOnLanguage(this.language.getKey()).name(language.getName() + " CompilerGCCSensor");
+  public String getReportPathKey() {
+    return language.getPluginProperty(REPORT_PATH_KEY);
   }
 
   @Override
-  protected String reportPathKey() {
-    return REPORT_PATH_KEY;
-  }
-
-  /**
-   * Get string property from configuration. If the string is not set or empty,
-   * return the default value.
-   *
-   * @param name Name of the property
-   * @param def Default value
-   * @return Value of the property if set and not empty, else default value.
-   */
-  public String getParserStringProperty(String name, String def) {
-    String s = getStringProperty(name, "");
-    if (s == null || s.isEmpty()) {
-      return def;
-    }
-    return s;
+  public void describe(SensorDescriptor descriptor) {
+    descriptor.onlyOnLanguage(this.language.getKey()).name(language.getName() + " CompilerGCCSensor");
   }
 
   @Override
   protected void processReport(final SensorContext context, File report)
     throws javax.xml.stream.XMLStreamException {
     final CompilerParser parser = getCompilerParser();
-    final String reportCharset = getParserStringProperty(REPORT_CHARSET_DEF, parser.defaultCharset());
-    final String reportRegEx = getParserStringProperty(REPORT_REGEX_DEF, parser.defaultRegexp());
+    final String reportCharset = getContextStringProperty(context,
+            this.language.getPluginProperty(REPORT_CHARSET_DEF), parser.defaultCharset());
+    final String reportRegEx = getContextStringProperty(context,
+            this.language.getPluginProperty(REPORT_REGEX_DEF), parser.defaultRegexp());
     final List<CompilerParser.Warning> warnings = new LinkedList<>();
 
     // Iterate through the lines of the input file
@@ -122,6 +108,6 @@ public class CxxCompilerGccSensor extends CxxReportSensor {
   
   @Override
   protected String getSensorKey() {
-    return COMPILER_KEY;
+    return KEY;
   }  
 }

@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
  */
 public class CxxCompilerClangParser implements CompilerParser {
   public static final Logger LOG = Loggers.get(CxxCompilerClangParser.class);
-  public static final String COMPILER_KEY = "Clang";
+  public static final String KEY = "Clang";
   // search for single line with compiler warning message - order for groups: 1 = file, 2 = line, 3 = message, 4=id
   public static final String DEFAULT_REGEX_DEF = "^(.*):([0-9]+):[0-9]+: warning: (.*)\\[(.*)\\]$";
   // ToDo: as long as java 7 API is not used the support of named groups for regular expression is not possible
@@ -47,7 +47,7 @@ public class CxxCompilerClangParser implements CompilerParser {
    */
   @Override
   public String key() {
-    return COMPILER_KEY;
+    return KEY;
   }
 
   /**
@@ -79,7 +79,7 @@ public class CxxCompilerClangParser implements CompilerParser {
    */
   @Override
   public void processReport(final SensorContext context, File report, String charset, String reportRegEx, List<Warning> warnings) throws java.io.FileNotFoundException {
-    LOG.info("Parsing '{}' format", COMPILER_KEY);
+    LOG.info("Parsing '{}' format", KEY);
 
     Scanner scanner = new Scanner(report, charset);
     Pattern p = Pattern.compile(reportRegEx, Pattern.MULTILINE);

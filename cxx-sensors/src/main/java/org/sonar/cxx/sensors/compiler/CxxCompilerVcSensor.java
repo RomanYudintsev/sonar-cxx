@@ -46,7 +46,7 @@ public class CxxCompilerVcSensor extends CxxReportSensor {
   public static final String PARSER_KEY_DEF = "compiler.vc.parser";
   public static final String DEFAULT_PARSER_DEF = CxxCompilerVcParser.KEY;
   public static final String DEFAULT_CHARSET_DEF = "UTF-8";
-  public static final String COMPILER_KEY = "compiler.vc";
+  public static final String KEY = "compiler.vc";
 
   private CompilerParser parser;
 

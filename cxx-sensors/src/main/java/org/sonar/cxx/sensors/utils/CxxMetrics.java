@@ -93,9 +93,9 @@ public class CxxMetrics implements Metrics {
       .create();
     saveMetric(PUBLIC_UNDOCUMENTED_API_KEY, metric);
 
-    saveMetric(CxxCompilerVcSensor.COMPILER_KEY, buildReportMetric(CxxCompilerVcSensor.COMPILER_KEY, "Compiler Vc issues"));
-    saveMetric(CxxCompilerGccSensor.COMPILER_KEY, buildReportMetric(CxxCompilerGccSensor.COMPILER_KEY, "Compiler GCC issues"));
-    saveMetric(CxxCompilerClangSensor.COMPILER_KEY, buildReportMetric(CxxCompilerClangSensor.COMPILER_KEY, "Compiler Clang issues"));
+    saveMetric(CxxCompilerVcSensor.KEY, buildReportMetric(CxxCompilerVcSensor.KEY, "Compiler Vc issues"));
+    saveMetric(CxxCompilerGccSensor.KEY, buildReportMetric(CxxCompilerGccSensor.KEY, "Compiler GCC issues"));
+    saveMetric(CxxCompilerClangSensor.KEY, buildReportMetric(CxxCompilerClangSensor.KEY, "Compiler Clang issues"));
     saveMetric(CxxCppCheckSensor.KEY, buildReportMetric(CxxCppCheckSensor.KEY, "CppCheck issues"));
     saveMetric(CxxOtherSensor.KEY, buildReportMetric(CxxOtherSensor.KEY, "Other tools issues"));
     saveMetric(CxxPCLintSensor.KEY, buildReportMetric(CxxPCLintSensor.KEY, "PC-Lint issues"));

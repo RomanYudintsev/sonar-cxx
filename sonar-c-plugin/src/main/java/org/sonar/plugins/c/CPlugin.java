@@ -718,19 +718,19 @@ public final class CPlugin implements Plugin {
   }
 
   public static class CxxCompilerVcSensorImpl extends CxxCompilerVcSensor {
-    public CxxCompilerVcSensorImpl(Settings settings) {
+    public CxxCompilerVcSensorImpl(Configuration settings) {
       super(new CLanguage(settings));
     }
   }
 
   public static class CxxCompilerGccSensorImpl extends CxxCompilerGccSensor {
-    public CxxCompilerGccSensorImpl(Settings settings) {
+    public CxxCompilerGccSensorImpl(Configuration settings) {
       super(new CLanguage(settings));
     }
   }
 
   public static class CxxCompilerClangSensorImpl extends CxxCompilerClangSensor {
-    public CxxCompilerClangSensorImpl(Settings settings) {
+    public CxxCompilerClangSensorImpl(Configuration settings) {
       super(new CLanguage(settings));
     }
   }
