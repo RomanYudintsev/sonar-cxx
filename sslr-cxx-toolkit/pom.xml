@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.sonarsource.sonarqube-plugins.cxx</groupId>
     <artifactId>cxx</artifactId>
-    <version>0.9.9-SNAPSHOT</version>
+    <version>0.9.9.1</version>
   </parent>
 
   <artifactId>sslr-cxx-toolkit</artifactId>
@@ -114,7 +114,7 @@
               <rules>
                 <requireFilesSize>
                   <maxsize>8500000</maxsize>
-                  <minsize>7000000</minsize>
+                  <minsize>6500000</minsize>
                   <files>
                     <file>${project.build.directory}/${project.build.finalName}.jar</file>
                   </files>
