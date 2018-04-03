@@ -5,6 +5,26 @@
   * http://clang-analyzer.llvm.org/available_checks.html
 -->
 <rules>
+  <rule>
+    <key>misc-use-after-move</key>
+    <name>misc-use-after-move</name>
+    <description><![CDATA[<p>
+    Warns if an object is used after it has been moved, for example:
+``
+    std::string str = "Hello, world!\n";
+    std::vector<std::string> messages;
+    messages.emplace_back(std::move(str));
+    std::cout << str;
+``
+The last line will trigger a warning that ``str`` is used after it has been moved.</p>
+        <h2>References</h2>
+        <p><a href="http://releases.llvm.org/5.0.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-use-after-move.html" target="_blank">clang.llvm.org</a></p>
+]]></description>
+    <tag>clangtidy</tag>
+    <tag>cert</tag>
+    <severity>MAJOR</severity>
+    <type>BUG</type>
+  </rule>
 <rule>
   <key>boost-use-to-string</key>
   <name>boost-use-to-string</name>
